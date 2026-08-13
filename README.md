@@ -1,51 +1,51 @@
 <div align="center">
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+**简体中文** · [English](README.en.md)
 
 # ChronoForge
 
-**A causality-first agent skill for recreating videos longer than a generation model's clip limit.**
+**一个因果优先的 Agent Skill：把超过单次生成时长的源视频，复刻为完整长视频。**
 
 [![Validate](https://img.shields.io/github/actions/workflow/status/peipeijiang/chronoforge/validate.yml?branch=main&style=for-the-badge&label=Validate)](https://github.com/peipeijiang/chronoforge/actions/workflows/validate.yml)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-ChronoForge-6D5AE6?style=for-the-badge)](SKILL.md)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-007808?style=for-the-badge&logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![Languages](https://img.shields.io/badge/Docs-English%20%7C%20中文-1F6FEB?style=for-the-badge)](README.zh-CN.md)
+[![Languages](https://img.shields.io/badge/Docs-中文%20%7C%20English-1F6FEB?style=for-the-badge)](README.en.md)
 
 </div>
 
-Short-video models generate clips; stories run longer. ChronoForge turns a source video into evidence, immutable story truth, locked references, fixed-duration generation containers, deterministic assembly, and layered QA. Its central rule is simple: **story truth is immutable; provider clips are packaging**.
+短视频模型只能生成片段，但故事通常更长。ChronoForge 把源视频编译为证据、不可变的故事真值、锁定参考图、固定时长的生成容器、确定性拼接和分层 QA。它的核心原则是：**故事真值不可变，模型片段只是包装。**
 
-ChronoForge targets reference-locked structural and semantic reenactment. It does not promise pixel-perfect cloning, motion identity, or exact likeness, and it requires appropriate rights to the source and reference material.
+ChronoForge 的目标是“参考锁定的结构与语义复刻”，不承诺逐像素克隆、运动完全一致或身份完全一致；使用者必须拥有源视频与参考素材的相应权利。
 
-## Why ChronoForge
+## 为什么需要 ChronoForge
 
-Naive equal slicing preserves duration while destroying meaning. It can keep a character wearing a mask but lose the odor that caused it, show trash without the setup, or preserve a reaction after replacing its cause.
+机械等分可以保住时长，却会破坏故事。角色可能还戴着口罩，但气味这个原因消失了；垃圾被扔掉了，却没有前因；反应被保留下来，触发反应的动作却被替换了。
 
-ChronoForge makes those dependencies explicit:
+ChronoForge 会显式记录：
 
-- cause → visible action → reaction → consequence/payoff;
-- character state and prop lifecycles across cuts;
-- immutable editorial shots separated from provider-sized containers;
-- a human reference-lock gate before paid video generation;
-- L1/L2/L3 QA with retakes assigned to the earliest responsible layer;
-- serialized paid submissions with an append-only job ledger.
+- 原因 → 可见动作 → 反应 → 结果/回收；
+- 跨镜头的人物状态与道具生命周期；
+- 不可变的编辑镜头，以及与之分离的模型时长容器；
+- 付费视频生成之前的人工参考图锁定闸门；
+- L1/L2/L3 三层 QA，以及最早责任层返工；
+- 串行付费提交与追加式任务账本。
 
-## How it works
+## 工作原理
 
 ```mermaid
 flowchart LR
-  A["Source video"] --> B["Evidence pass"]
-  B --> C["Story truth<br/>beats · states · props"]
-  C --> D["Editorial shots"]
-  D --> E["Provider containers"]
-  C --> F["Reference design"]
-  F --> G{"Human reference lock"}
-  G -->|approved| H["Paid generation"]
+  A["源视频"] --> B["证据分析"]
+  B --> C["故事真值<br/>节拍 · 状态 · 道具"]
+  C --> D["编辑镜头"]
+  D --> E["模型容器"]
+  C --> F["参考图设计"]
+  F --> G{"人工锁定参考图"}
+  G -->|通过| H["付费生成"]
   E --> H
-  H --> I["L2 container QA"]
-  I --> J["Deterministic FFmpeg assembly"]
-  J --> K["L3 master QA"]
+  H --> I["L2 容器 QA"]
+  I --> J["FFmpeg 确定性拼接"]
+  J --> K["L3 母版 QA"]
 
   classDef evidence fill:#E8F1FF,stroke:#2F6FEB,color:#102A56;
   classDef truth fill:#FFF4CC,stroke:#B58105,color:#513B00;
@@ -57,28 +57,28 @@ flowchart LR
   class I,J,K output;
 ```
 
-The editorial timeline remains the source of truth even when a provider only outputs fixed 10-second clips. A 33.1-second source may become four 10-second jobs, retain `10 + 7 + 10 + 6.1` seconds, and then be assembled back to the editorial duration.
+即使模型每次只能输出固定 10 秒，编辑时间线仍然是唯一真值。一个 33.1 秒源视频可以提交四个 10 秒任务，实际保留 `10 + 7 + 10 + 6.1` 秒，再按原始故事时长拼回去。
 
-## Quick start
+## 快速开始
 
-### 1. Install the skill
+### 1. 安装 Skill
 
-Requirements: a `SKILL.md`-compatible agent host such as Codex, Python 3.10+, `ffmpeg`, and `ffprobe`.
+需要支持 `SKILL.md` 的 Agent 宿主（例如 Codex）、Python 3.10+、`ffmpeg` 和 `ffprobe`。
 
 ```bash
 git clone https://github.com/peipeijiang/chronoforge.git \
   ~/.agents/skills/chronoforge
 ```
 
-Start from your agent with a source video:
+在 Agent 中提供源视频并调用：
 
 ```text
-$chronoforge analyze and recreate /path/to/source.mp4 using 10-second provider clips
+$chronoforge 分析并复刻 /path/to/source.mp4，视频模型每段固定 10 秒
 ```
 
-### 2. Initialize a non-paid run
+### 2. 初始化非付费 Run
 
-From the skill directory:
+在 Skill 目录执行：
 
 ```bash
 python3 scripts/init_run.py /path/to/source.mp4 \
@@ -87,22 +87,22 @@ python3 scripts/init_run.py /path/to/source.mp4 \
   --aspect-ratio 9:16
 ```
 
-This probes and hashes the source, creates the run structure, and initializes the append-only ledger. It does not call a provider.
+这一步只探测并哈希源视频、创建目录和初始化追加式账本，不会调用任何付费模型。
 
-### 3. Compile and validate story truth
+### 3. 编译并验证故事真值
 
-Use [`assets/story-truth.example.json`](assets/story-truth.example.json) and [`assets/timeline.example.json`](assets/timeline.example.json) as schema examples, then validate your populated manifests:
+参考 [`assets/story-truth.example.json`](assets/story-truth.example.json) 和 [`assets/timeline.example.json`](assets/timeline.example.json) 填写实际清单，然后验证：
 
 ```bash
 python3 scripts/validate_story.py /path/to/run/analysis/story-truth.json
 python3 scripts/validate_timeline.py /path/to/run/manifests/timeline.json
 ```
 
-Stop for human approval after reference assets pass L1 QA. Paid video submission must not begin before that reference pack is locked.
+参考图通过 L1 QA 后必须停下来等待人工确认。参考包没有锁定前，不得提交付费视频任务。
 
-### 4. Validate and submit provider jobs
+### 4. 验证并提交模型任务
 
-The bundled adapter currently allow-lists UpDrama `gpt-image-2` and `omni_flash-10s`. Export the key only in your shell—never place it in a request or manifest.
+当前适配器只允许 UpDrama 的 `gpt-image-2` 与 `omni_flash-10s`。API Key 只能导出到当前 Shell，禁止写入请求或清单。
 
 ```bash
 export UPDRAMA_API_KEY="<your-key>"
@@ -111,7 +111,7 @@ python3 scripts/updrama_runtime.py preflight
 python3 scripts/updrama_runtime.py validate assets/omni-request.example.json
 ```
 
-Submitting is paid and requires an explicit confirmation phrase:
+提交任务会产生费用，因此命令要求显式确认：
 
 ```bash
 python3 scripts/updrama_runtime.py submit /path/to/run/requests/video/C01.json \
@@ -123,67 +123,67 @@ python3 scripts/updrama_runtime.py status <task-id> \
   --run-dir /path/to/run
 ```
 
-The adapter writes a submit intent before the POST, serializes creates on Unix-like systems, and records ambiguous submissions without retrying them in the same invocation. It is not a provider-level idempotency guarantee: resolve any `unknown_submission` before manually submitting again.
+适配器会在 POST 前写入提交意图，在类 Unix 系统上串行创建任务，并记录结果不明的提交，同时拒绝在同一次调用中自动重试。但这不是服务端幂等保证：出现 `unknown_submission` 后，必须先对账，再决定是否人工重提。
 
-### 5. Assemble the accepted containers
+### 5. 拼接已验收的容器
 
-Place the assembly manifest at the run root if it uses paths such as `media/containers/...`, because paths resolve relative to the manifest.
+若路径写成 `media/containers/...`，请把 assembly 清单放在 Run 根目录，因为相对路径以清单位置为基准。
 
 ```bash
 cp assets/assembly.example.json /path/to/run/assembly.json
-# Adapt the container list and retained durations first.
+# 先根据实际容器与保留时长修改清单。
 python3 scripts/assemble.py /path/to/run/assembly.json
 ```
 
-The assembler normalizes geometry, frame rate, pixel format, and audio before trimming and concatenation. It prints the encoded probe data so the final duration and streams can be checked.
+拼接器会统一画面尺寸、帧率、像素格式与音频，再裁剪和串联，并输出编码后的 probe 数据，用于核验时长和音视频流。
 
-## The fidelity contract
+## 复刻验收契约
 
-| Layer | Accepts | Rejects or retakes |
+| 层级 | 验收内容 | 拒绝或返工条件 |
 |---|---|---|
-| L1 · References | identity, environment, prop state, role isolation | wrong state, reference contamination, missing story-bearing object |
-| L2 · Raw containers | required beats in order, action completion before trim, continuity | technically valid clip with reversed or missing causality |
-| L3 · Master | exact editorial order, seams, A/V continuity, setup/payoff | assembly defects; these never trigger a paid generation retake |
+| L1 · 参考图 | 身份、环境、道具状态、角色隔离 | 状态错误、参考污染、故事关键道具缺失 |
+| L2 · 原始容器 | 必要节拍与顺序、裁剪点前完成动作、连续性 | 技术合格，但因果倒置或关键动作缺失 |
+| L3 · 母版 | 编辑顺序、接缝、音画连续、伏笔回收 | 仅修复拼接问题，绝不因此触发付费重生成 |
 
-Retake the earliest responsible layer and change one variable per controlled retry. A technical pass is not a story pass.
+返工应定位到最早责任层，每次受控重试只改一个变量。技术通过，不代表故事通过。
 
-## A 33-second example
+## 一个 33 秒案例
 
-The workflow that motivated ChronoForge was a 33.111723-second cat-café short. An early recreation preserved several visible objects but misunderstood the joke: a worker wears a mask because litter-box odor spreads, disposes of the waste, and the sequence resolves into a coffee-bean visual pun. Losing the cause made the mask, trash, and payoff look arbitrary.
+ChronoForge 来自一次 33.111723 秒猫咖短视频复刻。早期版本保留了一些可见物，却误解了笑点：员工因为猫砂盆气味戴上口罩，处理排泄物，最后用“咖啡豆”视觉双关收束。原因一旦丢失，口罩、扔垃圾和结尾都会显得莫名其妙。
 
-The corrected topology kept the original editorial beats and used four 10-second generation containers:
+修正后的拓扑保留原始编辑节拍，并使用四个 10 秒生成容器：
 
-| Container | Source range | Generated | Retained |
+| 容器 | 源视频范围 | 生成时长 | 保留时长 |
 |---|---:|---:|---:|
-| C01 | 0–10 s | 10 s | 10 s |
-| C02 | 10–17 s | 10 s | 7 s |
-| C03 | 17–27 s | 10 s | 10 s |
-| C04 | 27–33.111723 s | 10 s | 6.111723 s |
+| C01 | 0–10 秒 | 10 秒 | 10 秒 |
+| C02 | 10–17 秒 | 10 秒 | 7 秒 |
+| C03 | 17–27 秒 | 10 秒 | 10 秒 |
+| C04 | 27–33.111723 秒 | 10 秒 | 6.111723 秒 |
 
-The extra generated tails are packaging overhead, not new editorial material. Short containers must complete their action before the trim point and hold a stable end state afterward.
+多生成的尾部是模型包装开销，不是新的故事内容。短容器必须在裁剪点之前完成动作，之后保持稳定状态。
 
-## Included tools
+## 内置工具
 
-| Script | Purpose | Paid |
+| 脚本 | 用途 | 是否付费 |
 |---|---|---:|
-| `init_run.py` | probe/hash the source and initialize a run | No |
-| `validate_story.py` | reject missing causal and payoff links | No |
-| `validate_timeline.py` | verify editorial and container coverage | No |
-| `updrama_runtime.py` | preflight, validate, submit, and inspect jobs | Submit only |
-| `assemble.py` | normalize, trim, concatenate, and probe the master | No |
+| `init_run.py` | 探测/哈希源视频并初始化 Run | 否 |
+| `validate_story.py` | 拒绝缺少因果或回收关系的故事清单 | 否 |
+| `validate_timeline.py` | 检查编辑镜头与模型容器覆盖 | 否 |
+| `updrama_runtime.py` | 预检、验证、提交与查询任务 | 仅提交 |
+| `assemble.py` | 标准化、裁剪、拼接并探测母版 | 否 |
 
-The deeper contracts live in [`references/story-compiler.md`](references/story-compiler.md), [`references/provider-runtime.md`](references/provider-runtime.md), and [`references/qa-contract.md`](references/qa-contract.md).
+完整契约位于 [`references/story-compiler.md`](references/story-compiler.md)、[`references/provider-runtime.md`](references/provider-runtime.md) 与 [`references/qa-contract.md`](references/qa-contract.md)。
 
-## Known limits
+## 已知限制
 
-- ChronoForge is an agent-guided production protocol, not a one-command automatic video cloner.
-- Source-video semantic analysis is routed to an installed analysis skill such as `watch`; it is not bundled here.
-- The current provider adapter is UpDrama-specific and its runtime contract can drift. Always run `preflight` before paid work.
-- `status` records result URLs but does not download or hash media automatically.
-- The assembler expects video and audio in every input, uses centered scale-and-crop, and outputs H.264/AAC.
-- Paid-create file locking uses `fcntl`, so the current adapter targets macOS and Linux.
-- Initialization currently supports `9:16` and `16:9`.
+- ChronoForge 是 Agent 引导的生产协议，不是一条命令自动克隆视频。
+- 源视频语义分析会调用已安装的 `watch` 等分析 Skill，本仓库不内置该能力。
+- 当前模型适配器仅针对 UpDrama，运行时契约可能变化；付费前必须执行 `preflight`。
+- `status` 会记录结果 URL，但不会自动下载并哈希媒体。
+- 拼接器要求每个输入都有视频和音频，采用中心缩放裁切，并输出 H.264/AAC。
+- 付费任务文件锁使用 `fcntl`，因此当前适配器面向 macOS 与 Linux。
+- 初始化当前只支持 `9:16` 和 `16:9`。
 
-## License
+## 许可证
 
-No license has been selected yet. The source is publicly viewable, but reuse requires the owner's permission until a license is added.
+目前尚未选择许可证。源码可以公开查看，但在添加许可证之前，复用需要获得仓库所有者许可。
