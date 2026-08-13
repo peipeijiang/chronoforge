@@ -1,0 +1,11 @@
+{
+  "model": "omni_flash-10s",
+  "prompt": "A vertical 10-second container with one complete causal action, stable character identity, explicit reaction, and a clean hold after the retained trim point.",
+  "params": {
+    "images": [
+      "https://example.com/locked-reference.png"
+    ],
+    "aspect_ratio": "9:16"
+  }
+}
+

@@ -1,0 +1,11 @@
+{
+  "hook":{"beat_ids":["B01"],"mechanism":"incongruity"},
+  "characters":[{"id":"A","role":"order","state_track":[]},{"id":"B","role":"chaos","state_track":[]}],
+  "beats":[
+    {"id":"B01","source_range":[0.0,2.0],"initial_condition":true,"visible_action":"A works while B creates a conflicting condition","reaction":null,"consequence":"B02","payoff":"B03","must_preserve":["simultaneous contrast"],"may_drift":["background"]},
+    {"id":"B02","source_range":[2.0,5.0],"cause":"B01","visible_action":"A reacts visibly","reaction":"A changes behavior","consequence":"B03","payoff":null,"must_preserve":["reaction follows cause"],"may_drift":[]},
+    {"id":"B03","source_range":[5.0,8.0],"cause":"B02","visible_action":"The setup pays off","reaction":"characters resolve the conflict","consequence":null,"payoff":"B01","terminal":true,"must_preserve":["callback"],"may_drift":[]}
+  ],
+  "prop_tracks":[{"prop":"hero-object","states":[{"beat":"B01","state":"introduced"},{"beat":"B03","state":"payoff"}]}],
+  "fidelity_boundary":"reference-locked structural and semantic reenactment"
+}

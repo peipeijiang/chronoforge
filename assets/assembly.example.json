@@ -1,0 +1,10 @@
+{
+  "output":"media/final/master.mp4",
+  "size":[720,1280],
+  "fps":60,
+  "sample_rate":44100,
+  "containers":[
+    {"id":"C01","file":"media/containers/C01.raw.mp4","retain_seconds":10.0},
+    {"id":"C02","file":"media/containers/C02.raw.mp4","retain_seconds":7.0}
+  ]
+}

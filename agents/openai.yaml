@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChronoForge"
+  short_description: "Compile long videos into faithful generative replicas"
+  default_prompt: "Use $chronoforge to analyze this source video and build a causally faithful long-form replica."

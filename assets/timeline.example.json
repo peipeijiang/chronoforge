@@ -1,0 +1,13 @@
+{
+  "source_duration": 17.0,
+  "provider_clip_seconds": 10.0,
+  "editorial_shots": [
+    {"id":"S01","source_range":[0.0,6.5],"beat_ids":["B01"]},
+    {"id":"S02","source_range":[6.5,10.0],"beat_ids":["B02"]},
+    {"id":"S03","source_range":[10.0,17.0],"beat_ids":["B03"]}
+  ],
+  "containers": [
+    {"id":"C01","source_range":[0.0,10.0],"provider_duration":10.0,"retain_duration":10.0,"completion_deadline":10.0,"shot_segments":[{"shot_id":"S01","source_range":[0.0,6.5]},{"shot_id":"S02","source_range":[6.5,10.0]}]},
+    {"id":"C02","source_range":[10.0,17.0],"provider_duration":10.0,"retain_duration":7.0,"completion_deadline":7.0,"shot_segments":[{"shot_id":"S03","source_range":[10.0,17.0]}]}
+  ]
+}
