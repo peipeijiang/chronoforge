@@ -187,4 +187,3 @@ The deeper contracts live in [`references/story-compiler.md`](references/story-c
 ## License
 
 No license has been selected yet. The source is publicly viewable, but reuse requires the owner's permission until a license is added.
-

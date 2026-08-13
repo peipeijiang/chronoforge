@@ -88,4 +88,3 @@ If the provider later supports idempotency keys or request-hash lookup, prefer t
 - Resolve local source images to in-memory data URLs when supported; do not write expanded base64 requests to disk.
 - Remove recognizable people and source watermarks from generated reference assets when the task permits.
 - Confirm rights to reproduce the source and likenesses when use is not obviously authorized.
-

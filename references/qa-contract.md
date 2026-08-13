@@ -93,4 +93,3 @@ Use decisions such as:
 - `superseded_narrative_fail`
 
 Never use “pixel-perfect clone” for a reference-only video model. Prefer “reference-locked structural and semantic reenactment.”
-
