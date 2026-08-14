@@ -18,18 +18,16 @@ Short-video models generate clips; stories run longer. ChronoForge turns a sourc
 
 ChronoForge targets reference-locked structural and semantic reenactment. It does not promise pixel-perfect cloning, motion identity, or exact likeness, and it requires appropriate rights to the source and reference material.
 
-## Why ChronoForge
+## Core capabilities
 
-Naive equal slicing preserves duration while destroying meaning. It can keep a character wearing a mask but lose the odor that caused it, show trash without the setup, or preserve a reaction after replacing its cause.
+ChronoForge turns long-video recreation into four verifiable data layers: source evidence, editorial truth, provider execution requests, and rendered-media acceptance records. It analyzes the complete source first, then compiles shot boundaries, action order, character states, prop changes, and audio intent into an editorial timeline that is independent of any model's clip limit. Reference images and fixed-duration video jobs are generated only after that truth is frozen.
 
-ChronoForge makes those dependencies explicit:
-
-- cause → visible action → reaction → consequence/payoff;
-- character state and prop lifecycles across cuts;
-- immutable editorial shots separated from provider-sized containers;
-- a human reference-lock gate before paid video generation;
-- L1/L2/L3 QA with retakes assigned to the earliest responsible layer;
-- serialized paid submissions with an append-only job ledger.
+- **Complete source evidence:** records media metadata, timestamps, visual observations, transcripts, audio cues, and unresolved uncertainty instead of prompting from a few isolated frames.
+- **Story and continuity contracts:** stores each shot's cause, action, reaction, result, character state, prop state, and explicit must-preserve/may-drift fields.
+- **Editorial shots separated from provider jobs:** original shot boundaries stay authoritative; containers only package adjacent shots into durations accepted by the provider.
+- **Compiled and human-locked references:** assigns characters, locations, props, and key states to ordered reference roles; paid video generation waits for L1 QA and human approval.
+- **Safe paid execution:** refreshes the provider contract before each batch, writes intent before POST, serializes creates, and prevents blind retries after ambiguous submissions.
+- **Layered QA and deterministic assembly:** validates references at L1, raw containers at L2, and the final master at L3; only accepted slices reach deterministic FFmpeg trim, normalization, and concatenation.
 
 ## How it works
 
@@ -201,20 +199,18 @@ The assembler normalizes geometry, frame rate, pixel format, and audio before tr
 
 Retake the earliest responsible layer and change one variable per controlled retry. A technical pass is not a story pass.
 
-## A 33-second example
+## Long-video topology with a fixed-duration model
 
-The workflow that motivated ChronoForge was a 33.111723-second cat-café short. An early recreation preserved several visible objects but misunderstood the joke: a worker wears a mask because litter-box odor spreads, disposes of the waste, and the sequence resolves into a coffee-bean visual pun. Losing the cause made the mask, trash, and payoff look arbitrary.
+Assume a 33.111723-second source has eight continuous editorial shots while the video model always returns 10 seconds. ChronoForge keeps the eight original shot ranges unchanged and compiles semantically adjacent shots into four execution containers:
 
-The corrected topology kept the original editorial beats and used four 10-second generation containers:
+| Container | Editorial shots | Source range | Generated | Retained | Extra tail |
+|---|---|---:|---:|---:|---|
+| C01 | S01–S02 | 0–10 s | 10 s | 10 s | None |
+| C02 | S03–S04 | 10–17 s | 10 s | 7 s | Stable hold from 7–10 s, then trimmed |
+| C03 | S05–S06 | 17–27 s | 10 s | 10 s | None |
+| C04 | S07–S08 | 27–33.111723 s | 10 s | 6.111723 s | Stable hold from 6.111723–10 s, then trimmed |
 
-| Container | Source range | Generated | Retained |
-|---|---:|---:|---:|
-| C01 | 0–10 s | 10 s | 10 s |
-| C02 | 10–17 s | 10 s | 7 s |
-| C03 | 17–27 s | 10 s | 10 s |
-| C04 | 27–33.111723 s | 10 s | 6.111723 s |
-
-The extra generated tails are packaging overhead, not new editorial material. Short containers must complete their action before the trim point and hold a stable end state afterward.
+The final duration is `10 + 7 + 10 + 6.111723 = 33.111723` seconds. Containers change execution topology, never editorial truth. A failed container retakes only that job; a trim or concatenation defect returns only to FFmpeg and never triggers paid regeneration.
 
 ## Included tools
 
