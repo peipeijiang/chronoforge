@@ -34,28 +34,82 @@ ChronoForge 会显式记录：
 ## 工作原理
 
 ```mermaid
-flowchart LR
-  A["源视频"] --> B["证据分析"]
-  B --> C["故事真值<br/>节拍 · 状态 · 道具"]
-  C --> D["编辑镜头"]
-  D --> E["模型容器"]
-  C --> F["参考图设计"]
-  F --> G{"人工锁定参考图"}
-  G -->|通过| H["付费生成"]
-  E --> H
-  H --> I["L2 容器 QA"]
-  I --> J["FFmpeg 确定性拼接"]
-  J --> K["L3 母版 QA"]
+flowchart TD
+  subgraph A["A · 源片取证"]
+    SRC["① 源视频<br/>本地文件 · 权利确认"]
+    INIT["② ChronoForge / init_run.py<br/>ffprobe · 哈希 · 交付规格"]
+    WATCH["③ $watch / claude-video Skill<br/>全片观看 · 密集时间窗 · 转写"]
+    EVID["证据包<br/>source-evidence.json<br/>可见事实 · 编辑推断 · 未知"]
+    SRC --> INIT --> WATCH --> EVID
+  end
+
+  subgraph B["B · 创作真值与参考图"]
+    STORY["④ ChronoForge 故事编译器<br/>钩子 · 原因→动作→反应→回收<br/>人物状态 · 道具生命周期"]
+    SHOTS["⑤ 编辑镜头真值<br/>精确起止 · 动作顺序 · 音频意图"]
+    TOPO["⑥ 语义容器拓扑<br/>镜头不变 · 10秒任务只负责包装"]
+    REFS["⑦ 参考图计划<br/>人物 · 场景 · 道具 · 关键因果状态"]
+    PREFLIGHT["⑧ UpDrama 动态预检<br/>吸收 SKILL (1).md<br/>guide · model detail · request schema"]
+    IMG2["⑨ 付费模型：gpt-image-2<br/>生成/清洁参考图"]
+    L1{"⑩ L1 参考图 QA<br/>身份 · 状态 · 污染 · 畸形"}
+    LOCK{"唯一常规人工闸门<br/>锁定参考包及哈希"}
+
+    EVID --> STORY
+    STORY --> SHOTS --> TOPO
+    STORY --> REFS --> PREFLIGHT --> IMG2 --> L1
+    L1 -->|失败：只重做失败资产| REFS
+    L1 -->|通过| LOCK
+  end
+
+  subgraph C["C · 多容器视频生成"]
+    VPROMPT["⑪ ChronoForge 视频提示词编译<br/>参考职责 · 秒级时间轴 · 硬切<br/>裁剪截止点 · 音频 · 排除项"]
+    OMNI["⑫ 付费模型：omni_flash-10s × N<br/>每任务固定10秒 · 最多7张参考图"]
+    LEDGER["追加式付费账本<br/>submit intent · task ID · result hash<br/>未知提交禁止盲重试"]
+    L2{"⑬ L2 容器 QA<br/>ffprobe/FFmpeg + Watch<br/>可选 vision-tools"}
+
+    TOPO --> VPROMPT
+    LOCK --> VPROMPT
+    PREFLIGHT --> VPROMPT
+    VPROMPT --> LEDGER --> OMNI --> L2
+    L2 -->|参考图失败| REFS
+    L2 -->|动作/切点失败<br/>一次只改一个变量| VPROMPT
+  end
+
+  subgraph D["D · 确定性装配与交付"]
+    ASSEMBLE["⑭ FFmpeg / assemble.py<br/>normalize · trim/atrim · PTS reset · concat"]
+    L3{"⑮ L3 母版 QA<br/>完整解码 · 精确时长 · 七个剪辑点<br/>10/17/27秒音画接缝 · 故事回收"}
+    MASTER["最终母版<br/>视频 + prompts + reference manifest<br/>job ledger + L1/L2/L3 QA"]
+
+    L2 -->|通过| ASSEMBLE --> L3
+    L3 -->|仅装配失败：不付费重生| ASSEMBLE
+    L3 -->|通过| MASTER
+  end
+
+  CREATIVE["设计规范参考（非默认运行依赖）<br/>drama-skills：short-drama-assets / image-prompts<br/>storyboard / video-prompts / review<br/>LuxReal：条件化动作与反应写法"]
+  DONORS["局部代码参考（不原样执行）<br/>product-ugc-pipeline · viral-storyboard-omni<br/>viral-replica-pipeline · Agent Company"]
+  CREATIVE -.-> STORY
+  CREATIVE -.-> REFS
+  CREATIVE -.-> VPROMPT
+  DONORS -.-> PREFLIGHT
+  DONORS -.-> LEDGER
+  DONORS -.-> ASSEMBLE
 
   classDef evidence fill:#E8F1FF,stroke:#2F6FEB,color:#102A56;
   classDef truth fill:#FFF4CC,stroke:#B58105,color:#513B00;
-  classDef paid fill:#FFE5E5,stroke:#C93C3C,color:#5C1616;
-  classDef output fill:#E6F6EA,stroke:#27864A,color:#123F24;
-  class A,B evidence;
-  class C,D,E,F,G truth;
-  class H paid;
-  class I,J,K output;
+  classDef model fill:#FFE5E5,stroke:#C93C3C,color:#5C1616;
+  classDef gate fill:#F3E8FF,stroke:#7C3AED,color:#3B1764;
+  classDef tool fill:#E6F6EA,stroke:#27864A,color:#123F24;
+  classDef output fill:#DFF7F4,stroke:#0F766E,color:#134E4A;
+  classDef reference fill:#F5F5F5,stroke:#737373,color:#333,stroke-dasharray:5 5;
+  class SRC,INIT,WATCH,EVID evidence;
+  class STORY,SHOTS,TOPO,REFS,VPROMPT truth;
+  class IMG2,OMNI model;
+  class L1,LOCK,L2,L3 gate;
+  class PREFLIGHT,LEDGER,ASSEMBLE tool;
+  class MASTER output;
+  class CREATIVE,DONORS reference;
 ```
+
+实线节点属于 ChronoForge 的实际运行链；灰色虚线节点只表示设计规范或局部代码来源，不会作为第二套总控运行。红色节点会产生模型费用，紫色菱形是验收与回退点。
 
 即使模型每次只能输出固定 10 秒，编辑时间线仍然是唯一真值。一个 33.1 秒源视频可以提交四个 10 秒任务，实际保留 `10 + 7 + 10 + 6.1` 秒，再按原始故事时长拼回去。
 

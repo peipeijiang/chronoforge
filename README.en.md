@@ -34,28 +34,82 @@ ChronoForge makes those dependencies explicit:
 ## How it works
 
 ```mermaid
-flowchart LR
-  A["Source video"] --> B["Evidence pass"]
-  B --> C["Story truth<br/>beats · states · props"]
-  C --> D["Editorial shots"]
-  D --> E["Provider containers"]
-  C --> F["Reference design"]
-  F --> G{"Human reference lock"}
-  G -->|approved| H["Paid generation"]
-  E --> H
-  H --> I["L2 container QA"]
-  I --> J["Deterministic FFmpeg assembly"]
-  J --> K["L3 master QA"]
+flowchart TD
+  subgraph A["A · Source evidence"]
+    SRC["① Source video<br/>local file · rights confirmation"]
+    INIT["② ChronoForge / init_run.py<br/>ffprobe · hash · delivery contract"]
+    WATCH["③ $watch / claude-video Skill<br/>full pass · dense windows · transcript"]
+    EVID["Evidence bundle<br/>source-evidence.json<br/>visible fact · editorial inference · unknown"]
+    SRC --> INIT --> WATCH --> EVID
+  end
+
+  subgraph B["B · Creative truth and references"]
+    STORY["④ ChronoForge story compiler<br/>hook · cause→action→reaction→payoff<br/>character states · prop lifecycles"]
+    SHOTS["⑤ Editorial shot truth<br/>exact bounds · action order · audio intent"]
+    TOPO["⑥ Semantic container topology<br/>shots stay immutable · 10s jobs are packaging"]
+    REFS["⑦ Reference plan<br/>characters · location · props · causal states"]
+    PREFLIGHT["⑧ UpDrama runtime preflight<br/>absorbs SKILL (1).md<br/>guide · model detail · request schema"]
+    IMG2["⑨ Paid model: gpt-image-2<br/>generate/clean reference assets"]
+    L1{"⑩ L1 reference QA<br/>identity · state · contamination · anatomy"}
+    LOCK{"One routine human gate<br/>lock reference pack and hashes"}
+
+    EVID --> STORY
+    STORY --> SHOTS --> TOPO
+    STORY --> REFS --> PREFLIGHT --> IMG2 --> L1
+    L1 -->|fail: rebuild only the bad asset| REFS
+    L1 -->|pass| LOCK
+  end
+
+  subgraph C["C · Multi-container video generation"]
+    VPROMPT["⑪ ChronoForge video prompt compiler<br/>reference roles · timed actions · hard cuts<br/>trim deadline · audio · exclusions"]
+    OMNI["⑫ Paid model: omni_flash-10s × N<br/>fixed 10s jobs · up to 7 references"]
+    LEDGER["Append-only paid-job ledger<br/>submit intent · task ID · result hash<br/>never blind-retry an unknown submission"]
+    L2{"⑬ L2 container QA<br/>ffprobe/FFmpeg + Watch<br/>optional vision-tools"}
+
+    TOPO --> VPROMPT
+    LOCK --> VPROMPT
+    PREFLIGHT --> VPROMPT
+    VPROMPT --> LEDGER --> OMNI --> L2
+    L2 -->|reference failure| REFS
+    L2 -->|motion/cut failure<br/>change one variable| VPROMPT
+  end
+
+  subgraph D["D · Deterministic assembly and delivery"]
+    ASSEMBLE["⑭ FFmpeg / assemble.py<br/>normalize · trim/atrim · PTS reset · concat"]
+    L3{"⑮ L3 master QA<br/>full decode · exact duration · seven edits<br/>A/V seams at 10/17/27s · story payoff"}
+    MASTER["Final master<br/>video + prompts + reference manifest<br/>job ledger + L1/L2/L3 QA"]
+
+    L2 -->|pass| ASSEMBLE --> L3
+    L3 -->|assembly-only failure: no paid retake| ASSEMBLE
+    L3 -->|pass| MASTER
+  end
+
+  CREATIVE["Design references (not runtime dependencies)<br/>drama-skills: short-drama-assets / image-prompts<br/>storyboard / video-prompts / review<br/>LuxReal: conditional action and reaction craft"]
+  DONORS["Narrow code donors (never invoked unchanged)<br/>product-ugc-pipeline · viral-storyboard-omni<br/>viral-replica-pipeline · Agent Company"]
+  CREATIVE -.-> STORY
+  CREATIVE -.-> REFS
+  CREATIVE -.-> VPROMPT
+  DONORS -.-> PREFLIGHT
+  DONORS -.-> LEDGER
+  DONORS -.-> ASSEMBLE
 
   classDef evidence fill:#E8F1FF,stroke:#2F6FEB,color:#102A56;
   classDef truth fill:#FFF4CC,stroke:#B58105,color:#513B00;
-  classDef paid fill:#FFE5E5,stroke:#C93C3C,color:#5C1616;
-  classDef output fill:#E6F6EA,stroke:#27864A,color:#123F24;
-  class A,B evidence;
-  class C,D,E,F,G truth;
-  class H paid;
-  class I,J,K output;
+  classDef model fill:#FFE5E5,stroke:#C93C3C,color:#5C1616;
+  classDef gate fill:#F3E8FF,stroke:#7C3AED,color:#3B1764;
+  classDef tool fill:#E6F6EA,stroke:#27864A,color:#123F24;
+  classDef output fill:#DFF7F4,stroke:#0F766E,color:#134E4A;
+  classDef reference fill:#F5F5F5,stroke:#737373,color:#333,stroke-dasharray:5 5;
+  class SRC,INIT,WATCH,EVID evidence;
+  class STORY,SHOTS,TOPO,REFS,VPROMPT truth;
+  class IMG2,OMNI model;
+  class L1,LOCK,L2,L3 gate;
+  class PREFLIGHT,LEDGER,ASSEMBLE tool;
+  class MASTER output;
+  class CREATIVE,DONORS reference;
 ```
+
+Solid colored nodes belong to the ChronoForge runtime. Gray dashed nodes show design or code provenance only; they never become a second orchestrator. Red nodes incur model charges, and purple diamonds are acceptance and retry gates.
 
 The editorial timeline remains the source of truth even when a provider only outputs fixed 10-second clips. A 33.1-second source may become four 10-second jobs, retain `10 + 7 + 10 + 6.1` seconds, and then be assembled back to the editorial duration.
 
