@@ -22,7 +22,7 @@ Compile a source video into evidence, story truth, visual references, generation
 
 ## Route the work
 
-- Use an installed source-video analysis skill such as `watch` when available. Follow its frame-reading requirements completely.
+- Use the `watch` skill to extract source evidence. If watch is unavailable, fall back to manual ffprobe + ffmpeg frame extraction, but warn that dense time-window coverage and audio cues may be incomplete.
 - Use a configured reference-image provider when available; otherwise prepare requests without submitting.
 - Use a configured fixed-duration video provider when available; otherwise prepare container requests without submitting.
 - Use `ffprobe` and `ffmpeg` for deterministic inspection, trimming, normalization, assembly, and technical QA.
@@ -64,6 +64,15 @@ Validate the compiled story:
 ```bash
 python3 scripts/validate_story.py RUN_DIR/analysis/story-truth.json
 ```
+
+
+Call the watch skill with the source video path. It will produce:
+- media metadata (duration, geometry, fps, codec, audio streams);
+- time-stamped observation frames;
+- optional transcript or audio cues;
+- uncertain or unresolved items.
+
+If watch is unavailable, run `ffprobe` for metadata and extract key frames with `ffmpeg`, but this reduces evidence density.
 
 ## Stage 2: compile story truth
 
@@ -107,7 +116,7 @@ Split only the specific container whose same boundary failure repeats in a basel
 
 ## Stage 4: build and lock references
 
-Design references around control roles, not quantity.
+Generate reference images with UpDrama `gpt-image-2`. Design references around control roles, not quantity.
 
 - Global references: environment, character identities, hero props.
 - Beat references: causal setups, reactions, interaction geometry, important object states.
@@ -116,6 +125,12 @@ Design references around control roles, not quantity.
 For sensitive or gross-out actions, preserve narrative implication without unnecessary graphic detail. Never invent a literal action when the source only implies it editorially.
 
 Assign each accepted image a role and `must_not_control` list. Prefer 3–6 focused references per video container; never exceed provider limits. Hash the accepted pack and stop for the human reference-lock gate. Do not submit video until the user accepts it.
+
+
+For each reference asset:
+1. Write a request JSON with model `gpt-image-2`, prompt describing the role, `params.images` array (source frames or prior references), `params.size` (e.g. `1088x1920`), and `params.quality` (`high`).
+2. Validate the request schema against current UpDrama contract (see [references/updrama-contract.md](references/updrama-contract.md)).
+3. Do NOT submit yet. Wait for L1 QA and human lock.
 
 ## Stage 5: compile provider prompts
 
@@ -134,7 +149,7 @@ Use explicit language such as “odor comes only from the tent, never from the m
 
 ## Stage 6: execute safely
 
-Before submission:
+Submit video generation jobs to UpDrama `omni_flash-10s`. Before submission:
 
 - refresh provider guide/model detail;
 - validate current request schemas;
@@ -145,6 +160,17 @@ Before submission:
 Use the provider adapter pattern in [references/provider-runtime.md](references/provider-runtime.md). Never assume static examples override authenticated runtime detail.
 
 Poll by terminal fields, not localized display strings. Download results, hash them, and preserve the original provider output before any transformation.
+
+
+For each video container:
+1. Write a request JSON with model `omni_flash-10s`, timeline prompt, `params.images` (locked reference URLs), and `params.aspect_ratio` (`9:16` or `16:9`).
+2. Validate against [references/updrama-contract.md](references/updrama-contract.md).
+3. Run `python3 scripts/updrama_runtime.py preflight` to refresh provider guide and model detail.
+4. Run `python3 scripts/updrama_runtime.py submit REQUEST --run-dir DIR --job-id ID --confirm-paid I_UNDERSTAND_THIS_IS_PAID`.
+5. Poll with `python3 scripts/updrama_runtime.py status TASK_ID --run-dir DIR` until `is_final` is true.
+6. Download the result, hash it, and append to the job ledger before any transformation.
+
+See [references/updrama-contract.md](references/updrama-contract.md) for `unknown_submission` recovery and [references/delivery-and-canary.md](references/delivery-and-canary.md) for canary batch strategy.
 
 ## Stage 7: three-layer QA
 
