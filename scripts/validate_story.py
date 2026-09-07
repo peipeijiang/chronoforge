@@ -33,9 +33,9 @@ def main() -> int:
         initial = beat.get("initial_condition") is True
         terminal = beat.get("terminal") is True
         declared = bool(beat.get("ambiguity"))
-        if not initial and beat.get("cause") is None and not declared:
+        if not initial and not beat.get("cause") and not declared:
             errors.append(f"{label}: missing cause; mark initial_condition or declare ambiguity")
-        if not terminal and beat.get("consequence") is None and beat.get("payoff") is None and not declared:
+        if not terminal and not beat.get("consequence") and not beat.get("payoff") and not declared:
             errors.append(f"{label}: missing consequence/payoff; mark terminal or declare ambiguity")
         for field in ("cause", "consequence", "payoff"):
             ref = beat.get(field)

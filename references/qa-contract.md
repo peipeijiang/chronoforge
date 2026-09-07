@@ -26,7 +26,7 @@ Semantic gates:
 - no unwanted people, watermark, UI, or dangerous/graphic drift;
 - role and `must_not_control` fields are explicit.
 
-Stop for the human reference-lock gate after machine QA passes.
+Stop for the human reference-lock gate after L1 technical and actual semantic review passes. Generating the image happens before this gate.
 
 ## L2 container QA
 
@@ -93,3 +93,11 @@ Use decisions such as:
 - `superseded_narrative_fail`
 
 Never use “pixel-perfect clone” for a reference-only video model. Prefer “reference-locked structural and semantic reenactment.”
+
+## Machine-readable v2 handoff
+
+Keep the detailed layer-specific decision above as the reason. Map eligible assets to `accepted` or `accepted_with_warnings` (otherwise `rejected`) for `workflow.py qa`; bind each report to `asset_sha256`, reviewer and actual observations. Never map a technical-only pass to accepted.
+
+`media_qa.py` supplies probe/decode and timestamped frames, with semantic review explicitly pending. Write separate container QA reports with per-beat timestamps and evidence, then run `validate_plan.py PLAN --qa-dir QA_DIR --require-qa`. Do not mutate the frozen plan when adding review results. Also check the required beat order manually: the plan validator does not watch the media.
+
+After a new story/reference version, check the dependency registry before reusing any prior QA. Register all actual upstream dependencies; missing edges cannot be inferred by a file checker. The assembled master always needs a fresh L3 review.

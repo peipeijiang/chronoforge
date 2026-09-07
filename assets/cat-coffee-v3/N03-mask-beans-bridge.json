@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Reconstruct one clean photoreal vertical narrative-bridge keyframe at the same outdoor coffee cart. On the left, the same orange-and-white cat wears a small plain white face mask correctly over nose and mouth and watches with wary disgust. On the right, the same stocky silver-gray tabby holds a small stainless dosing cup filled with ordinary whole roasted coffee beans directly above the open compact grinder, about to pour them. The cream tent remains visible in the background so the edit can imply the preceding odor incident, but show no feces and never depict waste entering the grinder. Preserve exact cat identities, compact equipment, skyline and realistic paws. Remove every person, watermark, logo, UI and legible text. No smoke, no human hands, no clothing besides the orange cat's mask, no extra cats, no floating beans and no indoor cafe.",
+  "params": {
+    "images": [
+      "artifact://E15-MASK-BEANS"
+    ],
+    "size": "1088x1920",
+    "quality": "high"
+  }
+}

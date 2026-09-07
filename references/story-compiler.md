@@ -11,7 +11,7 @@
 
 ## Evidence schema
 
-Represent each observation as:
+Represent each observation as below. The values are illustrative, not measured source timing or proof that audio was heard. Record audio as unknown when not reviewed:
 
 ```json
 {
@@ -72,7 +72,7 @@ Do not reduce attraction to “cute,” “cinematic,” or “fast-paced.” Po
 Trace story-bearing state as a finite sequence:
 
 ```text
-mask: absent → odor reaction → worn → removed after hygiene restored
+mask: absent → odor reaction → worn → later absent (reason must be observed or marked uncertain)
 waste: caused → contained → carried → disposed
 drink: beans → grounds → extraction → milk → garnish → served
 ```
@@ -108,6 +108,7 @@ Each container manifest must include:
 ```
 
 Provider boundaries are not necessarily source shot boundaries. Preserve all internal source cuts in the prompt and QA manifest.
+Record measured source cuts separately from planned local generation cuts. If a recreation adapts pacing or removes a helper, declare the change and preserve the affected causal action. Do not call a generated timestamp an exact source cut.
 When a continuous source shot exceeds the provider limit, divide only its container ownership into contiguous `shot_segments`; do not invent an editorial cut in the immutable shot list.
 
 ## Common failures
@@ -120,3 +121,9 @@ When a continuous source shot exceeds the provider limit, divide only its contai
 - Equal-duration bins that split an action or separate its reaction.
 - Reference dilution: too many generic images weaken the key causal reference.
 - Technical-pass inflation: valid codecs are mistaken for story fidelity.
+
+## v2 execution handoff
+
+Use `validate_plan.py` to check that all must-preserve beats reach container actions before their trim points. It checks structure, not causal truth; do not manufacture a cause merely from chronological adjacency. Independent preparation threads may have their own initial conditions, and uncertain motivation may remain explicitly ambiguous.
+
+Use [reference-execution.md](reference-execution.md) for versioned artifacts and hash-bound QA. A changed story is a new frozen version; its earlier derived assets must not remain silently accepted.

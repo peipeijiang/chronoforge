@@ -1,0 +1,14 @@
+{
+  "model": "omni_flash-10s",
+  "prompt": "Generate exactly one vertical 9:16 photoreal 10.0-second video packaged for source story seconds 27.0-33.111723; all required story action must finish by 6.111723s and the finished presentation may hold naturally afterward. Natural outdoor plaza ambience, liquid pouring and a small final celebratory sound; no dialogue or music. Reference roles in array order: R1 controls only outdoor cart and skyline. R2 controls only both cat identities. R3 controls only the giant blue-rimmed floral enamel mug and tools, with no legible writing. R4 controls the separate dark-coffee and white-milk pour states. R5 controls the finished heart and final two-cat presentation. Timeline: 0.0-1.3s, orange-and-white cat pours dark brewed coffee from a small perforated metal vessel into the giant retro floral enamel mug. At 1.3s direct hard cut. 1.3-3.2s: orange cat pours white milk from a clearly separate milk bottle into the same mug, producing tan crema. At 3.2s direct hard cut. 3.2-4.4s: one coherent cat paw shapes a pale heart in the foam and adds a small green powder garnish. At 4.4s direct hard cut. 4.4-6.111723s: the orange-and-white cat and stocky silver tabby stand together behind the enormous finished mug, wave once and begin to taste through a clean white straw, completing the absurd cat-coffee payoff by 6.111723s. From 6.111723-10.0s hold the finished composition with only subtle breathing and eye motion, no new action. Keep the two cats separate, unclothed and anatomically feline. Exclude feces, litter props, waste bag, deodorizer, human hands, people, indoor cafe, plain modern mug, legible characters, transformed vessels, impossible streams, extra cats, identity fusion, duplicate paws, watermark, UI, logo, dissolve, morph and action after 6.111723s.",
+  "params": {
+    "images": [
+      "artifact://G01",
+      "artifact://G02",
+      "artifact://G03",
+      "artifact://K07",
+      "artifact://K08"
+    ],
+    "aspect_ratio": "9:16"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Reconstruct one clean photoreal vertical causal keyframe at the same outdoor coffee cart. The cream portable privacy tent is clearly visible behind the cart and a small pale yellow-green translucent comic odor cloud comes only from the open tent doorway, never from the espresso machine. The orange-and-white cat in the foreground turns toward that tent and covers or pinches its nose with one coherent paw in disgust. Keep the odor effect subtle and non-graphic; no visible feces or waste. Preserve the outdoor skyline, compact coffee equipment, tent position, cat markings and realistic feline anatomy. Remove all background people, source watermark, logo, UI and legible text. No mask yet, no flames, no white machine smoke, no human hand, no extra cat, no clothing and no indoor cafe.",
+  "params": {
+    "images": [
+      "artifact://E14-ODOR-NOSE"
+    ],
+    "size": "1088x1920",
+    "quality": "high"
+  }
+}

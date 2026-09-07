@@ -1,204 +1,119 @@
 ---
 name: chronoforge
-description: Analyze and recreate long source videos as causally faithful generative productions using source-video evidence, reference-image generation, fixed-duration video models, deterministic trimming/assembly, resumable paid-job ledgers, and layered media QA. Use when Codex must replicate, remake, reenact, extend, localize, or reconstruct a video longer than one generation-model clip; preserve story progression, causal actions, character/scene continuity, prop state, timing, audio intent, and editorial structure; or orchestrate Watch/Image2/Omni/FFmpeg-style workflows without LoRA training.
+description: Recreate videos longer than a generation model's clip limit using full-source evidence, story and continuity contracts, reference images, fixed-duration video jobs, layered QA and deterministic assembly. Use for source-led video remakes with Image2/Omni-style workflows without LoRA training.
 ---
 
-# ChronoForge
+# ChronoForge · v2
 
-Compile a source video into evidence, story truth, visual references, generation containers, and a verified master. Treat fidelity as a testable contract, not a prompt adjective.
+Reconstruct what the viewer understands, not just the objects visible in selected frames. Target reference-guided structural and semantic recreation; do not promise pixel, motion, face or original-audio identity.
 
-## Non-negotiable invariants
+## Working rules
 
-1. Analyze the full source before designing references or prompts.
-2. Preserve editorial shots and story beats as the immutable timeline truth. Treat provider clip lengths as packaging only.
-3. Record causal chains explicitly: cause → visible action → reaction → consequence/payoff.
-4. Trace every story-bearing prop and character state across shots.
-5. Claim structural/semantic reenactment unless the provider genuinely supports motion or pixel identity.
-6. Use one routine human gate: lock the accepted reference pack before paid video generation.
-7. Never expose API keys, write them into requests, or print them in logs.
-8. Write a submit intent before every paid POST. Serialize creates. Never blindly retry an ambiguous paid submission.
-9. Retake the earliest responsible layer and change one variable per controlled retry.
-10. Do not mark a technically valid master as faithful when its story causality is wrong.
+- Analyze the full source before spending on references. Keep observations, inferences and unknowns separate.
+- Freeze **versioned** editorial truth. Provider containers package the edit; they do not define source cuts. A later source audit creates a new version and invalidates affected downstream assets.
+- Connect cause → visible action → reaction → consequence/payoff. Track character and prop states across cuts.
+- Image2 generates references **before** L1 and human lock. Only paid **video** generation requires the locked reference pack.
+- The routine creative human gate is reference lock. Paid-batch, out-of-budget retry and scope-change authorization are separate; a lock is not permission for unlimited charges.
+- Preserve raw results and lineage. A technical pass is not semantic acceptance. Retake the earliest responsible layer.
+- No LoRA or local GPU training is required by this workflow. Provider generation still incurs API charges; local FFmpeg work consumes compute.
+- Never log keys or publish private source media, account details, task/result URLs or expanded reference data.
 
-## Route the work
+## Routing and references
 
-- Use the `watch` skill to extract source evidence. If watch is unavailable, fall back to manual ffprobe + ffmpeg frame extraction, but warn that dense time-window coverage and audio cues may be incomplete.
-- Use a configured reference-image provider when available; otherwise prepare requests without submitting.
-- Use a configured fixed-duration video provider when available; otherwise prepare container requests without submitting.
-- Use `ffprobe` and `ffmpeg` for deterministic inspection, trimming, normalization, assembly, and technical QA.
-- Read [references/story-compiler.md](references/story-compiler.md) before analyzing a narrative, comedy, tutorial, transformation, or process video.
-- Read [references/provider-runtime.md](references/provider-runtime.md) before any paid API submission or when using UpDrama Image2/Omni.
-- Read [references/qa-contract.md](references/qa-contract.md) before accepting assets, containers, or a master.
+Use the installed `watch` skill for source/frame evidence; read its instructions before invoking it. If unavailable, use ffprobe/FFmpeg plus direct frame inspection and disclose coverage/audio limitations. Watch does not automatically prove continuous visual or audio understanding.
 
-## Initialize a run
+Read these at their corresponding stage:
 
-Run:
+| Stage | Required reference |
+|---|---|
+| Source analysis and creative truth | [story-compiler.md](references/story-compiler.md) |
+| Artifact registration, lock, revision and handoff | [reference-execution.md](references/reference-execution.md) |
+| Before UpDrama calls | [provider-runtime.md](references/provider-runtime.md), [updrama-contract.md](references/updrama-contract.md) |
+| Asset/video acceptance | [qa-contract.md](references/qa-contract.md) |
+| Pilot, assembly and delivery | [delivery-and-canary.md](references/delivery-and-canary.md) |
+| Restoring an incomplete prior run or learning from the original production | [v2-restoration-audit.md](references/v2-restoration-audit.md) |
 
-```bash
-python3 scripts/init_run.py SOURCE_VIDEO --out RUN_DIR \
-  --provider-clip-seconds 10 --aspect-ratio 9:16
-```
+Other creative skills may inform judgment when installed and relevant; they are not mandatory runtime dependencies or parallel orchestrators.
 
-This creates manifests and directories only. It never submits paid work.
-
-Copy and adapt [assets/timeline.example.json](assets/timeline.example.json) and [assets/assembly.example.json](assets/assembly.example.json) when building the first manifests.
-
-Use the run directory as the only creative/runtime ledger for that replication. Preserve source hashes and accepted artifact hashes.
-
-## Stage 1: extract source evidence
-
-1. Probe duration, dimensions, frame rate, codecs, and audio.
-2. Analyze the entire source at scene level.
-3. Run focused dense passes around every cut, reaction, hidden action, prop transition, and container trim boundary.
-4. Read every extracted frame required by the analysis tool. Do not infer unseen action from filenames.
-5. Distinguish:
-   - `visible_fact`: directly shown.
-   - `editorial_inference`: strongly implied by ordering or reaction.
-   - `unknown`: unresolved.
-6. Note dialogue, music, effects, silence, rhythm, and audio-dependent jokes.
-
-Write `analysis/source-evidence.json` and `analysis/story-truth.json` using the schemas in [references/story-compiler.md](references/story-compiler.md).
-
-Validate the compiled story:
+## 1. Initialize and audit the complete source
 
 ```bash
-python3 scripts/validate_story.py RUN_DIR/analysis/story-truth.json
+python3 scripts/init_run.py SOURCE_VIDEO --out RUN --provider-clip-seconds 10 --aspect-ratio 9:16
 ```
 
+Probe/hash the source; inventory existing analysis before extracting again. Inspect a full-duration pass, then dense windows at causal actions, reactions, prop transitions and ambiguous cuts. Read every frame required by the chosen analysis pass. Record timestamps from the extraction manifest, not guessed filenames.
 
-Call the watch skill with the source video path. It will produce:
-- media metadata (duration, geometry, fps, codec, audio streams);
-- time-stamped observation frames;
-- optional transcript or audio cues;
-- uncertain or unresolved items.
+Write `source-evidence.json`: visible facts, editorial inference, uncertainty, evidence paths/time ranges, coverage, dialogue/music/effects and what audio was actually heard. If key actions remain uncertain, inspect their windows before designing them.
 
-If watch is unavailable, run `ffprobe` for metadata and extract key frames with `ffmpeg`, but this reduces evidence density.
+## 2. Explain the appeal and freeze creative truth
 
-## Stage 2: compile story truth
+Answer: What is the opening hook? Why does the viewer keep watching? Which setup creates expectation, what escalates it, and how is it paid off? For every important action, explain the reason and the state it changes.
 
-Before writing a shot plan, answer:
+Compile story beats, observed shot boundaries, character roles/state tracks, prop lifecycles, audio intent and must-preserve/may-drift fields. Explicitly record approved adaptations such as removing a human helper: who now performs that helper's causal action? Do not silently call a rewritten action a source observation.
 
-- What is the hook and why does it attract attention?
-- What does each character want or represent?
-- Why does every important action occur?
-- Which reaction makes an invisible cause legible?
-- What information must the viewer remember for the payoff?
-- Which object or state carries continuity across a cut?
+Version the story/timeline contracts. Maintain evidence → beat → reference role → container action → QA observation traceability. Use `validate_story.py` as a structural check, not proof of understanding.
 
-Build:
+## 3. Package the editorial timeline
 
-- an immutable editorial shot list;
-- a beat-level causal graph;
-- character state tracks;
-- prop lifecycle tracks;
-- setup/payoff links;
-- must-preserve and may-drift fields;
-- a fidelity boundary and rights/safety check.
+Group adjacent complete action units into fixed-duration provider containers. Keep measured source cuts distinct from chosen local prompt cuts. Long source shots may span containers through `shot_segments`; preserve their editorial identity.
 
-Fail the analysis if an important action is listed without a cause, reaction, consequence, or declared ambiguity.
+For `omni_flash-10s`, each paid request outputs 10 seconds. Choose retained intervals from the story, complete all actions before each trim point, and put only a stable hold in the discarded tail. The minimum count ceil(duration/10) is a capacity lower bound, not a universally sufficient topology.
 
-## Stage 3: design generation topology
-
-Keep editorial truth separate from provider containers.
-
-1. Group adjacent source beats into semantic containers no longer than the provider clip duration.
-2. Prefer boundaries at hard source cuts or complete action units.
-3. For a short final container, require all action to finish before the retained trim point and hold a stable end state afterward.
-4. Do not equal-bin by default. Optimize for causal completeness and continuity.
-5. Assign each container `shot_segments` so a source shot longer than the provider limit may span containers without changing editorial truth.
-6. Validate the timeline:
+Write timeline and execution plan. Validate with:
 
 ```bash
-python3 scripts/validate_timeline.py RUN_DIR/manifests/timeline.json
+python3 scripts/validate_timeline.py RUN/manifests/timeline.json
+python3 scripts/validate_plan.py RUN/manifests/execution-plan.json
 ```
 
-Split only the specific container whose same boundary failure repeats in a baseline and one controlled same-topology retry. Record increased generated seconds and cost before splitting.
+The sanitized 33.111723-second [case plan](assets/cat-coffee-v3/execution-plan.json) uses four jobs retaining 10 + 7 + 10 + 6.111723 seconds. Its generated action timings are not measured source cut times and must not be imposed on a new video.
 
-## Stage 4: build and lock references
+## 4. Generate, inspect and lock references
 
-Generate reference images with UpDrama `gpt-image-2`. Design references around control roles, not quantity.
+Plan global identity/environment/hero-prop references and additional beat/state/contact references only where they provide control. Each ordered slot has a role and exclusions; do not let a style/identity image override the action or setting.
 
-- Global references: environment, character identities, hero props.
-- Beat references: causal setups, reactions, interaction geometry, important object states.
-- Cleanup references: remove watermarks, background people, UI, and irrelevant text while preserving evidence.
+Register source frames and contracts. Write `gpt-image-2` requests using `artifact://ID` source or prior-reference inputs, size and quality. Run the planned dry-run, fetch/review provider details, obtain exact image-batch authorization, and submit. Download/hash originals, inspect them at L1, and only then show the recommended pack for human lock.
 
-For sensitive or gross-out actions, preserve narrative implication without unnecessary graphic detail. Never invent a literal action when the source only implies it editorially.
+A reuse/retire/new reference table is required when revising a prior pack. Do not regenerate good assets merely to equalize count or dimensions; do not reuse a visually attractive asset whose state contradicts the story.
 
-Assign each accepted image a role and `must_not_control` list. Prefer 3–6 focused references per video container; never exceed provider limits. Hash the accepted pack and stop for the human reference-lock gate. Do not submit video until the user accepts it.
+Record actual L1 findings, roles, hashes and user approval through `workflow.py`. The reference-execution guide supplies commands. Never copy approval from an example or earlier incompatible version.
 
+## 5. Compile executable prompts and pass the ready gate
 
-For each reference asset:
-1. Write a request JSON with model `gpt-image-2`, prompt describing the role, `params.images` array (source frames or prior references), `params.size` (e.g. `1088x1920`), and `params.quality` (`high`).
-2. Validate the request schema against current UpDrama contract (see [references/updrama-contract.md](references/updrama-contract.md)).
-3. Do NOT submit yet. Wait for L1 QA and human lock.
+Each prompt states model duration/aspect/style/audio, ordered reference roles, local action windows, cuts, actor/contact geometry, cause and state constraints, trim deadline, hold and exclusions. State what is implied rather than literally shown.
 
-## Stage 5: compile provider prompts
+Cross-check the prompt against the execution plan; planned local cuts cannot overwrite evidence. Check required beats across the whole movie, not only within the pilot.
 
-For each provider container, write:
+```bash
+python3 scripts/updrama_runtime.py preflight --run-dir RUN
+python3 scripts/updrama_runtime.py validate REQUEST --ready --run-dir RUN
+```
 
-1. output duration, orientation, style, and audio intent;
-2. ordered reference roles;
-3. a timestamped action timeline;
-4. explicit hard cuts when needed;
-5. causal constraints and state continuity;
-6. the completion deadline for trimmed containers;
-7. global and shot-specific exclusions;
-8. a precise statement of what is not literally shown.
+Inspect saved preflight bodies. `fetched_review_required` is not automatic contract approval. Ready validation resolves reference bytes in memory and enforces the current human lock for Omni. Before submitting, verify actual paid authorization and unresolved ledger state.
 
-Use explicit language such as “odor comes only from the tent, never from the machine” when confusing the source would reverse the story.
+## 6. Generate and preserve each container
 
-## Stage 6: execute safely
+Use an optional risk-based pilot within the authorized batch; reuse a passing, current pilot in the master. Its acceptance does not certify unrelated story sections.
 
-Submit video generation jobs to UpDrama `omni_flash-10s`. Before submission:
+```bash
+python3 scripts/updrama_runtime.py submit REQUEST --run-dir RUN --job-id C01-v1-attempt1 --confirm-paid I_UNDERSTAND_THIS_IS_PAID
+python3 scripts/updrama_runtime.py collect TASK_ID --run-dir RUN --output RUN/media/containers/C01-v1.raw.mp4 --wait-seconds 40
+```
 
-- refresh provider guide/model detail;
-- validate current request schemas;
-- resolve references to stable URLs or allowed in-memory data URLs;
-- confirm authorization for the exact paid batch;
-- ensure there is no unresolved `unknown_submission` for the same model lane.
+Creates are serialized per run. Known jobs resume without another POST; unknown submissions block the model lane pending evidence-backed reconciliation. A failed download is not a reason to regenerate video. Record task provenance and raw media hashes before transformation.
 
-Use the provider adapter pattern in [references/provider-runtime.md](references/provider-runtime.md). Never assume static examples override authenticated runtime detail.
+## 7. Inspect L2 and repair the responsible layer
 
-Poll by terminal fields, not localized display strings. Download results, hash them, and preserve the original provider output before any transformation.
+Run full decode/probe and collect timestamped evidence with `media_qa.py`. Inspect every required beat, action order, cause/reaction, character/prop state, anatomy, contact, internal cut and retained deadline; listen separately for audio. Dense sampling supplements rather than replaces necessary playback.
 
+Record per-beat L2 observations and warnings in separate `QA_DIR/C01.json` etc. reports, then validate with `validate_plan.py PLAN --qa-dir QA_DIR --require-qa`. Never mutate a frozen plan just to attach QA. Register accepted containers with **all** actual reference/contract dependencies. No helper infers semantic pass from file existence.
 
-For each video container:
-1. Write a request JSON with model `omni_flash-10s`, timeline prompt, `params.images` (locked reference URLs), and `params.aspect_ratio` (`9:16` or `16:9`).
-2. Validate against [references/updrama-contract.md](references/updrama-contract.md).
-3. Run `python3 scripts/updrama_runtime.py preflight` to refresh provider guide and model detail.
-4. Run `python3 scripts/updrama_runtime.py submit REQUEST --run-dir DIR --job-id ID --confirm-paid I_UNDERSTAND_THIS_IS_PAID`.
-5. Poll with `python3 scripts/updrama_runtime.py status TASK_ID --run-dir DIR` until `is_final` is true.
-6. Download the result, hash it, and append to the job ledger before any transformation.
+Distinguish provider/no-result failures from rendered creative failures. A controlled rendered retake changes one identified variable. Consider a costed topology split only after repeated evidence of the same boundary problem. Pure assembly errors stay local.
 
-See [references/updrama-contract.md](references/updrama-contract.md) for `unknown_submission` recovery and [references/delivery-and-canary.md](references/delivery-and-canary.md) for canary batch strategy.
+## 8. Assemble, review the master and deliver
 
-## Stage 7: three-layer QA
+Check selected registered containers for freshness. Build the assembly manifest with raw-file hashes, L2 decisions, retained seconds and the delivery contract. Run `assemble.py`; it refuses overwritten masters and validates cumulative frame budgets and full decode.
 
-Apply the full contract in [references/qa-contract.md](references/qa-contract.md):
+L3 compares the whole movie with current story truth: setup/payoff, transitions, trim completion, framing and audio—not merely codec/duration. Sample actual timeline seams with `media_qa.py --seams ...`. Quantify CFR duration delta and disclose allowed visual deviations.
 
-- L1 reference assets;
-- L2 raw provider containers;
-- L3 assembled master.
-
-At every layer run deterministic technical checks and timestamped semantic checks. At L2, require both the presence and ordering of causal beats. At L3, sample all provider seams, internal cuts, trim boundaries, and setup/payoff links.
-
-Never trigger a paid retake for an assembly-only error.
-
-## Stage 8: assemble and deliver
-
-Normalize geometry, frame rate, pixel format, audio rate, and channel count. Trim containers to their declared retained durations. Concatenate in timeline order.
-
-At constant frame rate, encode an integer number of frames and disclose the resulting quantization delta from the editorial duration.
-
-Deliver:
-
-- the final master;
-- contact sheet or preview;
-- reference-pack manifest;
-- provider request manifests;
-- append-only job ledger;
-- per-container L2 QA;
-- final L3 QA;
-- disclosed warnings and fidelity boundary.
-
-If a new story audit invalidates an old master, mark it superseded instead of leaving it as a delivery candidate.
+Deliver the current master plus private provenance/QA package. Do not deliver synthetic test output or stale/superseded candidates. If re-audit changes the story, invalidate declared dependents through `workflow.py invalidate`, preserve prior files, and rebuild only the affected layers.

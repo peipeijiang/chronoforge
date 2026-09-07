@@ -2,238 +2,130 @@
 
 **简体中文** · [English](README.en.md)
 
-# ChronoForge
+# ChronoForge · v2
 
-**一个因果优先的 Agent Skill：把超过单次生成时长的源视频，复刻为完整长视频。**
+面向长视频复刻的 Agent Skill：理解源片、锁定参考图、分段生成、验收后精确拼接。
 
-[![Validate](https://img.shields.io/github/actions/workflow/status/peipeijiang/chronoforge/validate.yml?branch=main&style=for-the-badge&label=Validate)](https://github.com/peipeijiang/chronoforge/actions/workflows/validate.yml)
-[![Agent Skill](https://img.shields.io/badge/Agent%20Skill-ChronoForge-6D5AE6?style=for-the-badge)](SKILL.md)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-007808?style=for-the-badge&logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![Languages](https://img.shields.io/badge/Docs-中文%20%7C%20English-1F6FEB?style=for-the-badge)](README.en.md)
+[![Validate](https://img.shields.io/github/actions/workflow/status/peipeijiang/chronoforge/validate.yml?branch=v2)](https://github.com/peipeijiang/chronoforge/actions/workflows/validate.yml)
 
 </div>
 
-短视频模型只能生成片段，但故事通常更长。ChronoForge 把源视频编译为证据、不可变的故事真值、锁定参考图、固定时长的生成容器、确定性拼接和分层 QA。它的核心原则是：**故事真值不可变，模型片段只是包装。**
+ChronoForge 将长于模型单次生成上限的视频，编排为可追溯的多段制作流程。默认使用 UpDrama **gpt-image-2** 生成参考图、**omni_flash-10s** 生成视频，使用 FFmpeg 裁剪与拼接；无需 LoRA 训练，但模型调用仍有 API 费用。
 
-ChronoForge 的目标是“参考锁定的结构与语义复刻”，不承诺逐像素克隆、运动完全一致或身份完全一致；使用者必须拥有源视频与参考素材的相应权利。
+目标是参考图约束下的结构与语义复刻，不承诺像素、动作轨迹或原声完全一致。使用前应拥有源视频与参考素材的相应权限。
 
 ## 核心功能
 
-ChronoForge 把长视频复刻拆成四类可验证数据：源片证据、编辑真值、模型执行请求和成片验收记录。它先完整分析源片，再把镜头、动作顺序、人物状态、道具变化和音频意图编译为不受模型单次时长限制的编辑时间线；参考图和固定时长视频只在真值冻结后生成。
+- **理解完整故事：** 分析吸引力、动作原因、反应、结果和伏笔回收，区分可见事实与推断。
+- **保留人物与场景：** 为身份、环境、道具和关键状态分配参考图角色，按镜头组合有序参考包。
+- **跨越单次时长限制：** 编辑时间线与模型任务分离，按完整动作组织分段，并在裁剪点前完成情节。
+- **锁定可追溯版本：** 参考图经过 L1 检查与人工锁定；哈希和依赖记录用于识别过期素材。
+- **安全恢复任务：** 提交前记录意图，重复执行复用已知任务；结果不明时先对账，不盲目再次扣费。
+- **分层验收与局部返工：** 参考图、原始片段、最终母版分别验收，纯剪辑问题不触发模型重生成。
 
-- **完整源片取证**：记录媒体参数、时间码、画面观察、转写、音频线索和不确定项，避免只根据少量抽帧编写提示词。
-- **故事与连续性契约**：为每个镜头保存原因、动作、反应、结果、人物状态、道具状态以及必须保留/允许变化的字段。
-- **编辑镜头与模型任务分离**：编辑镜头保持原始起止时间；模型容器只负责把相邻镜头包装成供应商允许的固定时长任务。
-- **参考图编译与人工锁定**：把人物、场景、道具和关键状态分配到有序参考槽；参考图通过 L1 QA 并由用户锁定后，才能提交视频生成。
-- **安全的付费执行**：每批调用前刷新模型契约，POST 前写入提交意图，串行创建任务，并对结果不明的提交禁用盲目重试。
-- **分层 QA 与确定性装配**：L1 验参考图、L2 验原始视频容器、L3 验最终母版；仅将通过的片段交给 FFmpeg 精确裁剪、标准化和拼接。
-
-## 工作原理
+## 完整流程
 
 ```mermaid
 flowchart TD
-  subgraph A["A · 源片取证"]
-    SRC["① 源视频<br/>本地文件 · 权利确认"]
-    INIT["② ChronoForge / init_run.py<br/>ffprobe · 哈希 · 交付规格"]
-    WATCH["③ $watch / claude-video Skill<br/>全片观看 · 密集时间窗 · 转写"]
-    EVID["证据包<br/>source-evidence.json<br/>可见事实 · 编辑推断 · 未知"]
-    SRC --> INIT --> WATCH --> EVID
-  end
-
-  subgraph B["B · 创作真值与参考图"]
-    STORY["④ ChronoForge 故事编译器<br/>钩子 · 原因→动作→反应→回收<br/>人物状态 · 道具生命周期"]
-    SHOTS["⑤ 编辑镜头真值<br/>精确起止 · 动作顺序 · 音频意图"]
-    TOPO["⑥ 语义容器拓扑<br/>镜头不变 · 10秒任务只负责包装"]
-    REFS["⑦ 参考图计划<br/>人物 · 场景 · 道具 · 关键因果状态"]
-    PREFLIGHT["⑧ UpDrama 动态预检<br/>吸收 SKILL (1).md<br/>guide · model detail · request schema"]
-    IMG2["⑨ 付费模型：gpt-image-2<br/>生成/清洁参考图"]
-    L1{"⑩ L1 参考图 QA<br/>身份 · 状态 · 污染 · 畸形"}
-    LOCK{"唯一常规人工闸门<br/>锁定参考包及哈希"}
-
-    EVID --> STORY
-    STORY --> SHOTS --> TOPO
-    STORY --> REFS --> PREFLIGHT --> IMG2 --> L1
-    L1 -->|失败：只重做失败资产| REFS
-    L1 -->|通过| LOCK
-  end
-
-  subgraph C["C · 多容器视频生成"]
-    VPROMPT["⑪ ChronoForge 视频提示词编译<br/>参考职责 · 秒级时间轴 · 硬切<br/>裁剪截止点 · 音频 · 排除项"]
-    OMNI["⑫ 付费模型：omni_flash-10s × N<br/>每任务固定10秒 · 最多7张参考图"]
-    LEDGER["追加式付费账本<br/>submit intent · task ID · result hash<br/>未知提交禁止盲重试"]
-    L2{"⑬ L2 容器 QA<br/>ffprobe/FFmpeg + Watch<br/>可选 vision-tools"}
-
-    TOPO --> VPROMPT
-    LOCK --> VPROMPT
-    PREFLIGHT --> VPROMPT
-    VPROMPT --> LEDGER --> OMNI --> L2
-    L2 -->|参考图失败| REFS
-    L2 -->|动作/切点失败<br/>一次只改一个变量| VPROMPT
-  end
-
-  subgraph D["D · 确定性装配与交付"]
-    ASSEMBLE["⑭ FFmpeg / assemble.py<br/>normalize · trim/atrim · PTS reset · concat"]
-    L3{"⑮ L3 母版 QA<br/>完整解码 · 精确时长 · 七个剪辑点<br/>10/17/27秒音画接缝 · 故事回收"}
-    MASTER["最终母版<br/>视频 + prompts + reference manifest<br/>job ledger + L1/L2/L3 QA"]
-
-    L2 -->|通过| ASSEMBLE --> L3
-    L3 -->|仅装配失败：不付费重生| ASSEMBLE
-    L3 -->|通过| MASTER
-  end
-
-  CREATIVE["设计规范参考（非默认运行依赖）<br/>drama-skills：short-drama-assets / image-prompts<br/>storyboard / video-prompts / review<br/>LuxReal：条件化动作与反应写法"]
-  DONORS["局部代码参考（不原样执行）<br/>product-ugc-pipeline · viral-storyboard-omni<br/>viral-replica-pipeline · Agent Company"]
-  CREATIVE -.-> STORY
-  CREATIVE -.-> REFS
-  CREATIVE -.-> VPROMPT
-  DONORS -.-> PREFLIGHT
-  DONORS -.-> LEDGER
-  DONORS -.-> ASSEMBLE
-
-  classDef evidence fill:#E8F1FF,stroke:#2F6FEB,color:#102A56;
-  classDef truth fill:#FFF4CC,stroke:#B58105,color:#513B00;
-  classDef model fill:#FFE5E5,stroke:#C93C3C,color:#5C1616;
-  classDef gate fill:#F3E8FF,stroke:#7C3AED,color:#3B1764;
-  classDef tool fill:#E6F6EA,stroke:#27864A,color:#123F24;
-  classDef output fill:#DFF7F4,stroke:#0F766E,color:#134E4A;
-  classDef reference fill:#F5F5F5,stroke:#737373,color:#333,stroke-dasharray:5 5;
-  class SRC,INIT,WATCH,EVID evidence;
-  class STORY,SHOTS,TOPO,REFS,VPROMPT truth;
-  class IMG2,OMNI model;
-  class L1,LOCK,L2,L3 gate;
-  class PREFLIGHT,LEDGER,ASSEMBLE tool;
-  class MASTER output;
-  class CREATIVE,DONORS reference;
+  A["源视频与权限 / 初始化、探测、哈希"] --> B["Watch：全片观察、重点窗口、音频证据"]
+  B --> C["故事真值：吸引力、因果、人物与道具状态"]
+  C --> D["编辑时间线 + 分段动作计划"]
+  C --> E["参考图计划：复用 / 新建 / 淘汰"]
+  E --> F["授权图片批次 → Image2 生成 → 下载与哈希"]
+  F --> G{"L1 参考图验收"}
+  G -->|修正参考图| E
+  G -->|通过| H{"人工锁定参考包"}
+  H --> I["有序参考角色 + 分段提示词 + Ready 校验"]
+  D --> I
+  I --> J["授权视频批次 → Omni 10 秒任务 × N"]
+  J --> K["账本 / 状态查询 / 原始结果下载"]
+  K --> L{"L2：必要动作、顺序、状态、裁剪期限"}
+  L -->|参考定义有误| E
+  L -->|生成执行有误| I
+  L -->|通过| M["FFmpeg：哈希核对、逐段裁剪、统一规格、拼接"]
+  M --> N{"L3：全片叙事、接缝、音画与时长"}
+  N -->|仅剪辑问题| M
+  N -->|通过并披露偏差| O["母版 + 清单 + 提示词 + QA"]
+  C -.新版本：使受影响的下游素材失效.-> E
 ```
 
-实线节点属于 ChronoForge 的实际运行链；灰色虚线节点只表示设计规范或局部代码来源，不会作为第二套总控运行。红色节点会产生模型费用，紫色菱形是验收与回退点。
+人工定妆锁定是常规创作闸门；付费批次和超出已有授权的重试仍需单独授权。Image2 必须先生成，才有图片可供验收和锁定。
 
-即使模型每次只能输出固定 10 秒，编辑时间线仍然是唯一真值。一个 33.1 秒源视频可以提交四个 10 秒任务，实际保留 `10 + 7 + 10 + 6.1` 秒，再按原始故事时长拼回去。
+| 环节 | 产出 / 提示词重点 | 实际工具或模型 | 参考能力来源 |
+|---|---|---|---|
+| 源片分析 | 时间证据、吸引力、事实与不确定项 | Watch + ffprobe/FFmpeg | watch / claude-video |
+| 故事与连续性 | 原因→动作→反应→结果、状态轨迹 | Agent 分析与结构校验 | ChronoForge；早期 drama-skills / LuxReal 研究 |
+| 参考图 | 身份、环境、道具、关键动作状态；各图控制范围 | UpDrama gpt-image-2 | ChronoForge 参考图协议 |
+| 视频编排 | 有序参考角色、局部动作时间、切镜、裁剪期限、音频和排除项 | Agent 编排；omni_flash-10s | ChronoForge；早期 storyboard/video-prompts 研究 |
+| 任务执行 | 当前接口契约、提交意图、任务状态、媒体哈希 | updrama_runtime.py | 原 UpDrama 接入说明与实际生产适配器 |
+| 验收返工 | 必要节拍的时间证据、状态与接缝、偏差披露 | Agent 观察 + media_qa.py | ChronoForge L1/L2/L3 |
+| 拼接交付 | 保留区间、累计帧预算、统一编码规格 | FFmpeg + assemble.py | 原生产装配流程 |
 
-## 快速开始
+“参考能力来源”不表示每次都调用那些 Skill，也不代表仓库内置了它们。Watch 是外部分析依赖，其余编排由 ChronoForge 主导。
 
-### 1. 安装 Skill
+## 固定 10 秒模型如何复刻更长视频
 
-需要支持 `SKILL.md` 的 Agent 宿主（例如 Codex）、Python 3.10+、`ffmpeg` 和 `ffprobe`。
+一个 33.111723 秒案例采用下列语义分段：
+
+| 容器 | 模型输出 | 实际保留 | 剩余内容 |
+|---|---:|---:|---|
+| C01 | 10 秒 | 10 秒 | 无 |
+| C02 | 10 秒 | 7 秒 | 完成动作后的稳定停留，裁掉 |
+| C03 | 10 秒 | 10 秒 | 无 |
+| C04 | 10 秒 | 6.111723 秒 | 完成动作后的稳定停留，裁掉 |
+
+四次生成共 40 秒素材，编辑目标为 33.111723 秒；60 fps 输出为 1987 帧，约 33.116667 秒，量化差约 +0.004944 秒。分段方式是案例，不是所有视频的固定模板；原片切镜与生成提示词中的局部切镜分别记录。
+
+## 安装与开始
+
+需要支持 `SKILL.md` 的 Agent、Python 3.10+、FFmpeg、ffprobe。付费适配器目前面向 macOS/Linux。
 
 ```bash
-git clone https://github.com/peipeijiang/chronoforge.git \
-  ~/.agents/skills/chronoforge
+git clone --branch v2 https://github.com/peipeijiang/chronoforge.git ~/.agents/skills/chronoforge
 ```
 
-在 Agent 中提供源视频并调用：
+已有安装请先备份，不要直接覆盖未提交的本地修改。在 Agent 中调用：
 
 ```text
-$chronoforge 分析并复刻 /path/to/source.mp4，视频模型每段固定 10 秒
+$chronoforge 分析并复刻 /path/to/source.mp4。
+图片使用 UpDrama Image2，视频使用 omni_flash-10s。
+先完成故事分析、参考图计划和非付费校验。
 ```
 
-### 2. 初始化非付费 Run
-
-在 Skill 目录执行：
+从 Skill 目录初始化非付费 Run：
 
 ```bash
-python3 scripts/init_run.py /path/to/source.mp4 \
-  --out /path/to/run \
-  --provider-clip-seconds 10 \
-  --aspect-ratio 9:16
+python3 scripts/init_run.py /path/to/source.mp4 --out /path/to/run --provider-clip-seconds 10 --aspect-ratio 9:16
 ```
 
-这一步只探测并哈希源视频、创建目录和初始化追加式账本，不会调用任何付费模型。
+后续操作由 [SKILL.md](SKILL.md) 引导。[参考图与版本操作指南](references/reference-execution.md) 提供登记、QA、锁定、失效和验收命令；[付费执行指南](references/provider-runtime.md) 提供预检、提交、恢复与下载命令。
 
-### 3. 编译并验证故事真值
+API Key 仅从 `UPDRAMA_API_KEY` 环境变量读取，不写入清单或 Git。仓库不会自动读取聊天中的 Key。
 
-参考 [`assets/story-truth.example.json`](assets/story-truth.example.json) 和 [`assets/timeline.example.json`](assets/timeline.example.json) 填写实际清单，然后验证：
+## 内置脚本
 
-```bash
-python3 scripts/validate_story.py /path/to/run/analysis/story-truth.json
-python3 scripts/validate_timeline.py /path/to/run/manifests/timeline.json
-```
-
-参考图通过 L1 QA 后必须停下来等待人工确认。参考包没有锁定前，不得提交付费视频任务。
-
-### 4. 验证并提交模型任务
-
-当前适配器只允许 UpDrama 的 `gpt-image-2` 与 `omni_flash-10s`。API Key 只能导出到当前 Shell，禁止写入请求或清单。
-
-```bash
-export UPDRAMA_API_KEY="<your-key>"
-
-python3 scripts/updrama_runtime.py preflight
-python3 scripts/updrama_runtime.py validate assets/omni-request.example.json
-```
-
-提交任务会产生费用，因此命令要求显式确认：
-
-```bash
-python3 scripts/updrama_runtime.py submit /path/to/run/requests/video/C01.json \
-  --run-dir /path/to/run \
-  --job-id C01-v1 \
-  --confirm-paid I_UNDERSTAND_THIS_IS_PAID
-
-python3 scripts/updrama_runtime.py status <task-id> \
-  --run-dir /path/to/run
-```
-
-适配器会在 POST 前写入提交意图，在类 Unix 系统上串行创建任务，并记录结果不明的提交，同时拒绝在同一次调用中自动重试。但这不是服务端幂等保证：出现 `unknown_submission` 后，必须先对账，再决定是否人工重提。
-
-### 5. 拼接已验收的容器
-
-若路径写成 `media/containers/...`，请把 assembly 清单放在 Run 根目录，因为相对路径以清单位置为基准。
-
-```bash
-cp assets/assembly.example.json /path/to/run/assembly.json
-# 先根据实际容器与保留时长修改清单。
-python3 scripts/assemble.py /path/to/run/assembly.json
-```
-
-拼接器会统一画面尺寸、帧率、像素格式与音频，再裁剪和串联，并输出编码后的 probe 数据，用于核验时长和音视频流。
-
-## 复刻验收契约
-
-| 层级 | 验收内容 | 拒绝或返工条件 |
+| 脚本 | 用途 | 付费 |
 |---|---|---|
-| L1 · 参考图 | 身份、环境、道具状态、角色隔离 | 状态错误、参考污染、故事关键道具缺失 |
-| L2 · 原始容器 | 必要节拍与顺序、裁剪点前完成动作、连续性 | 技术合格，但因果倒置或关键动作缺失 |
-| L3 · 母版 | 编辑顺序、接缝、音画连续、伏笔回收 | 仅修复拼接问题，绝不因此触发付费重生成 |
+| init_run.py | 初始化、源片探测与哈希 | 否 |
+| validate_story.py / validate_timeline.py | 故事结构、时间覆盖和分段检查 | 否 |
+| validate_plan.py | 必要节拍覆盖、参考角色、裁剪期限和 QA 记录检查 | 否 |
+| workflow.py | 素材登记、依赖哈希、QA 记录、人工锁定和下游失效 | 否 |
+| updrama_runtime.py | 接口快照、计划/Ready 校验、提交、恢复和下载 | 仅 submit |
+| media_qa.py | 全量解码、探测、带时间的抽帧证据；语义判断仍待完成 | 否 |
+| assemble.py | 输入哈希校验、累计帧预算、裁剪、拼接、母版报告 | 否 |
 
-返工应定位到最早责任层，每次受控重试只改一个变量。技术通过，不代表故事通过。
+运行离线测试：
 
-## 固定时长模型的长视频编排示例
+```bash
+python3 -m unittest discover -s tests -v
+```
 
-假设源视频时长为 33.111723 秒，分析后得到 8 个连续编辑镜头，而视频模型每次固定输出 10 秒。ChronoForge 不会改写这 8 个镜头的原始时间，而是根据语义相邻关系将它们编译为 4 个执行容器：
+## v2 恢复内容与边界
 
-| 容器 | 编辑镜头 | 源时间范围 | 模型生成 | 母版保留 | 多余尾部处理 |
-|---|---|---:|---:|---:|---|
-| C01 | S01–S02 | 0–10 秒 | 10 秒 | 10 秒 | 无 |
-| C02 | S03–S04 | 10–17 秒 | 10 秒 | 7 秒 | 7–10 秒为稳定 hold，随后裁掉 |
-| C03 | S05–S06 | 17–27 秒 | 10 秒 | 10 秒 | 无 |
-| C04 | S07–S08 | 27–33.111723 秒 | 10 秒 | 6.111723 秒 | 6.111723–10 秒为稳定 hold，随后裁掉 |
+[v2 审计记录](references/v2-restoration-audit.md) 对照了历史生产中的遗漏、修复和证据边界。[脱敏案例](assets/cat-coffee-v3/execution-plan.json) 包含完整分段计划、有序参考角色，以及当时实际使用的 Image2/Omni 提示词；其中的视频版本 V3 不等于 Skill 分支版本 v2。案例未附媒体、私有地址或有效授权，不能直接提交。
 
-最终母版时长为 `10 + 7 + 10 + 6.111723 = 33.111723` 秒。模型容器只改变执行拓扑，不改变编辑镜头真值；某个容器生成失败时只重做该容器，纯裁剪或拼接错误只返回 FFmpeg，不触发付费重生成。
-
-## 内置工具
-
-| 脚本 | 用途 | 是否付费 |
-|---|---|---:|
-| `init_run.py` | 探测/哈希源视频并初始化 Run | 否 |
-| `validate_story.py` | 拒绝缺少因果或回收关系的故事清单 | 否 |
-| `validate_timeline.py` | 检查编辑镜头与模型容器覆盖 | 否 |
-| `updrama_runtime.py` | 预检、验证、提交与查询任务 | 仅提交 |
-| `assemble.py` | 标准化、裁剪、拼接并探测母版 | 否 |
-
-完整契约位于 [`references/story-compiler.md`](references/story-compiler.md)、[`references/provider-runtime.md`](references/provider-runtime.md) 与 [`references/qa-contract.md`](references/qa-contract.md)。
-
-## 已知限制
-
-- ChronoForge 是 Agent 引导的生产协议，不是一条命令自动克隆视频。
-- 源视频语义分析会调用已安装的 `watch` 等分析 Skill，本仓库不内置该能力。
-- 当前模型适配器仅针对 UpDrama，运行时契约可能变化；付费前必须执行 `preflight`。
-- `status` 会记录结果 URL，但不会自动下载并哈希媒体。
-- 拼接器要求每个输入都有视频和音频，采用中心缩放裁切，并输出 H.264/AAC。
-- 付费任务文件锁使用 `fcntl`，因此当前适配器面向 macOS 与 Linux。
-- 初始化当前只支持 `9:16` 和 `16:9`。
+这仍是 Agent 引导的制作协议，不是一键克隆器。结构校验不会理解故事，记录的批准不能代替真实授权，依赖检查无法发现未登记的关系。接口快照需人工或 Agent 阅读核验；这次升级没有重新验证线上模型效果或发起付费生成。当前拼接器支持生成音轨或无声母版，原声音轨复用需独立编排与同步检查。
 
 ## 许可证
 
-目前尚未选择许可证。源码可以公开查看，但在添加许可证之前，复用需要获得仓库所有者许可。
+目前未选择许可证。源码可公开查看；添加许可证前，复用需获得仓库所有者许可。

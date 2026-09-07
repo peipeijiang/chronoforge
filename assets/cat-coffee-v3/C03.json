@@ -1,0 +1,15 @@
+{
+  "model": "omni_flash-10s",
+  "prompt": "Generate exactly one vertical 9:16 photoreal 10.0-second video that reenacts source story seconds 17.0-27.0, completing the litter-cleanup subplot before returning to coffee. Natural outdoor plaza ambience, light bag rustle, metal scoop sound, espresso flow and a brief deodorizer hiss; no dialogue or music. Reference roles in array order: R1 controls only outdoor cart/tent geometry. R2 controls only both cat identities. R3 controls only the sealed black litter-waste bag and unmistakable perforated litter scoop with pink handle. R4 controls only espresso extraction. R5 controls only close two-cat interaction. R6 controls only the final green deodorizing spray can. Timeline: 0.0-3.2s, direct medium shot: silver tabby exits the cream tent carrying a small tightly tied opaque black litter-waste bag in one paw and a wide perforated metal litter scoop with pink handle in the other; no visible feces. At 3.2s direct hard cut. 3.2-4.3s: silver tabby deliberately places or tosses the sealed bag into an off-screen waste bin and puts the scoop aside; neither object touches the coffee cart or food. At 4.3s direct hard cut. 4.3-6.0s: compact machine extracts a continuous dark espresso stream into a small stainless cup. At 6.0s direct hard cut. 6.0-7.3s: relieved silver tabby celebrates with a small paw dance. At 7.3s direct hard cut. 7.3-8.8s: orange-and-white cat confronts the silver tabby; they have a brief playful paw tussle, identities remaining separate. At 8.8s direct hard cut. 8.8-10.0s: orange cat uses the small green odor-control spray can for one short sanitizing mist aimed at the cleared empty side of the cart, away from beans, cups and liquid; action finishes by 10.0s. Exclude graphic waste, loose litter, human hands, people, serving-tray interpretation, handbag interpretation, milk-bottle interpretation of the green can, spray into food, indoor cafe, clothes, extra cats, fused bodies, duplicate paws, watermark, UI, logo, text, dissolve or morph.",
+  "params": {
+    "images": [
+      "artifact://G01",
+      "artifact://G02",
+      "artifact://N04",
+      "artifact://K05",
+      "artifact://K06",
+      "artifact://N05"
+    ],
+    "aspect_ratio": "9:16"
+  }
+}

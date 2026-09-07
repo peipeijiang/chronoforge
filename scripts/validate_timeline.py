@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import math
 
 
 EPS = 1e-6
@@ -15,12 +16,18 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("timeline")
     args = p.parse_args()
-    data = json.loads(pathlib.Path(args.timeline).read_text(encoding="utf-8"))
+    def bad_constant(value):
+        raise ValueError('non-finite JSON number: ' + value)
+    data = json.loads(pathlib.Path(args.timeline).read_text(encoding="utf-8"), parse_constant=bad_constant)
     errors: list[str] = []
     duration = float(data.get("source_duration", 0))
     limit = float(data.get("provider_clip_seconds", 0))
     shots = data.get("editorial_shots", [])
     containers = data.get("containers", [])
+    for label, items in (('editorial_shots', shots), ('containers', containers)):
+        ids = [x.get('id') for x in items]
+        if any(not x for x in ids) or len(ids) != len(set(ids)):
+            errors.append(label + ': IDs must be nonempty and unique')
 
     if not shots:
         errors.append("editorial_shots must be nonempty")
@@ -35,7 +42,7 @@ def main() -> int:
             except Exception:
                 errors.append(f"{label}[{i}] has invalid source_range")
                 continue
-            if end <= start:
+            if not all(map(math.isfinite, (start, end))) or end <= start:
                 errors.append(f"{label}[{i}] end must be greater than start")
             if abs(start - cursor) > EPS:
                 errors.append(f"{label}[{i}] starts at {start}, expected contiguous {cursor}")
@@ -43,7 +50,7 @@ def main() -> int:
         if items and abs(cursor - end_target) > EPS:
             errors.append(f"{label} ends at {cursor}, expected {end_target}")
 
-    if duration <= 0 or limit <= 0:
+    if not all(map(math.isfinite, (duration, limit))) or duration <= 0 or limit <= 0:
         errors.append("source_duration and provider_clip_seconds must be positive")
     check_ranges(shots, "editorial_shots", duration)
     check_ranges(containers, "containers", duration)
@@ -55,6 +62,8 @@ def main() -> int:
         retain_duration = float(c.get("retain_duration", 0))
         deadline = float(c.get("completion_deadline", retain_duration))
         start, end = map(float, c.get("source_range", (0, 0)))
+        if not all(map(math.isfinite, (provider_duration, retain_duration, deadline))) or min(provider_duration, retain_duration, deadline) <= 0:
+            errors.append(f'containers[{i}] durations/deadline must be finite and positive')
         if provider_duration > limit + EPS:
             errors.append(f"containers[{i}] provider_duration exceeds limit")
         if retain_duration > provider_duration + EPS:
@@ -75,6 +84,8 @@ def main() -> int:
                 continue
             if seg_start < start - EPS or seg_end > end + EPS or seg_end <= seg_start:
                 errors.append(f"containers[{i}].shot_segments[{j}] is outside its container or empty")
+            if not all(map(math.isfinite, (seg_start, seg_end))):
+                errors.append(f'containers[{i}] non-finite segment range')
             shot_start, shot_end = shot_ranges[sid]
             if seg_start < shot_start - EPS or seg_end > shot_end + EPS:
                 errors.append(f"containers[{i}].shot_segments[{j}] is outside source shot {sid!r}")

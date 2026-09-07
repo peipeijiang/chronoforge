@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Reconstruct one clean photoreal vertical cleanup keyframe from the reference. The stocky silver-gray tabby walks out through the open doorway of the same cream portable tent, holding a wide perforated metal litter scoop with a short pink handle in one paw and a small tightly tied opaque black litter-waste bag in the other. The bag is sealed and clean outside; show no feces, loose litter, fluids or graphic detail. The objects must be unmistakably a cat-litter scoop and a sealed cleanup bag, not a serving tray, handbag or random prop. Preserve the silver tabby's round face, dark stripes, realistic paws, tent geometry, outdoor plaza and skyline. Remove tent branding, every person, watermark, logo, UI and legible text. No orange cat, coffee-machine smoke, human limbs, clothing, extra tools or indoor room.",
+  "params": {
+    "images": [
+      "artifact://E16-WASTE-SCOOP"
+    ],
+    "size": "1088x1920",
+    "quality": "high"
+  }
+}

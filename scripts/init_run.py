@@ -9,6 +9,7 @@ import hashlib
 import json
 import pathlib
 import subprocess
+import math
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -43,7 +44,7 @@ def main() -> int:
     source = pathlib.Path(args.source_video).expanduser().resolve()
     if not source.is_file():
         raise SystemExit(f"source video not found: {source}")
-    if args.provider_clip_seconds <= 0:
+    if not math.isfinite(args.provider_clip_seconds) or args.provider_clip_seconds <= 0:
         raise SystemExit("provider clip duration must be positive")
 
     out = pathlib.Path(args.out).expanduser().resolve()
@@ -60,7 +61,7 @@ def main() -> int:
         "recorded_at": now,
     }
     run = {
-        "schema_version": "1.0.0",
+        "schema_version": "2.0.0",
         "status": "initialized",
         "created_at": now,
         "source_sha256": source_record["sha256"],
@@ -68,7 +69,7 @@ def main() -> int:
         "aspect_ratio": args.aspect_ratio,
         "paid_create_mode": "serial_single_writer",
         "blind_retry": False,
-        "reference_lock": "pending",
+        "reference_lock_registry": "manifests/artifacts.json",
     }
     timeline = {
         "source_duration": float(source_record["probe"]["format"]["duration"]),
@@ -79,10 +80,12 @@ def main() -> int:
     write_json(out / "source.json", source_record)
     write_json(out / "run.json", run)
     write_json(out / "manifests" / "timeline.json", timeline)
+    write_json(out / "manifests" / "artifacts.json", {"schema_version": 2, "assets": {}, "locks": []})
+    write_json(out / "manifests" / "execution-plan.json", {"schema_version": 2, "story_file": "../analysis/story-truth.json", "jobs": []})
     write_json(out / "analysis" / "source-evidence.json", {"observations": []})
     write_json(out / "analysis" / "story-truth.json", {"hook": None, "characters": [], "beats": [], "prop_tracks": [], "fidelity_boundary": None})
     (out / "media-jobs.jsonl").write_text(json.dumps({
-        "record_type": "ledger_header", "schema_version": "1.0.0",
+        "record_type": "ledger_header", "schema_version": "2.0.0",
         "contains_secrets": False, "paid_create_mode": "serial_single_writer",
         "blind_retry": False,
     }, sort_keys=True) + "\n", encoding="utf-8")

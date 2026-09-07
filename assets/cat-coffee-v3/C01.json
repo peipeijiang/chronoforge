@@ -1,0 +1,14 @@
+{
+  "model": "omni_flash-10s",
+  "prompt": "Generate exactly one vertical 9:16 photoreal 10.0-second video that reenacts source story seconds 0.0-10.0 as a clear cause-and-reaction comedy. Natural outdoor plaza ambience only; no dialogue or music. Reference roles in array order: R1 controls only the outdoor skyline, coffee cart and compact equipment geometry. R2 controls only the two real-cat identities and relative scale. R3 controls the simultaneous opening composition: orange-and-white cat cleaning in front while silver tabby squats naturally in the clean yellow-white litter box behind; litter hides all waste. R4 controls the odor source and disgust reaction: pale yellow-green odor comes only from the cream tent doorway, never from the coffee machine. R5 controls the final white-mask and coffee-bean bridge state. Timeline: 0.0-2.4s, medium-wide continuous action: orange-and-white cat seriously wipes the compact espresso machine with a white cloth while silver tabby is visibly squatting in the litter box immediately behind; no explicit feces. At 2.4s direct hard cut. 2.4-4.0s: silver tabby leaves the litter-box area and goes into the cream tent; orange cat notices. At 4.0s direct hard cut. 4.0-6.5s: a subtle pale yellow-green odor cloud exits the tent doorway toward the cart; orange cat turns toward the tent and pinches its nose with one paw. At 6.5s direct hard cut. 6.5-9.0s: orange cat picks up a small plain white mask from the cart with its own paw and puts it correctly over nose and mouth; no human gives it the mask. At 9.0s direct hard cut. 9.0-10.0s: masked orange cat looks wary as the same silver tabby returns beside the grinder holding a small metal cup of ordinary roasted coffee beans. Cause order must remain litter-box act, tent odor, nose reaction, mask, then beans. Keep cats unclothed and anatomically feline. Exclude graphic waste, visible anus, human hands, people, machine smoke, flames, indoor cafe, apron, extra cats, identity fusion, duplicate paws, watermark, UI, logo, text, dissolve, morph and unfinished late action.",
+  "params": {
+    "images": [
+      "artifact://G01",
+      "artifact://G02",
+      "artifact://N01",
+      "artifact://N02",
+      "artifact://N03"
+    ],
+    "aspect_ratio": "9:16"
+  }
+}

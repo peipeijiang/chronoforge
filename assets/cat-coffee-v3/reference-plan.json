@@ -1,0 +1,100 @@
+{
+  "status": "planned_not_locked",
+  "assets": [
+    {
+      "id": "G01",
+      "role": "outdoor plaza, skyline, cart and compact equipment geometry",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "G02",
+      "role": "two unclothed feline identities and their relative scale",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "G03",
+      "role": "blue-rimmed floral enamel mug and hero tools",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K03",
+      "role": "metal bean cup and grinder contact",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K04",
+      "role": "portafilter and tamping contact",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K05",
+      "role": "espresso extraction",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K06",
+      "role": "two-cat interaction geometry",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K07",
+      "role": "separate dark-coffee and white-milk pours",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "K08",
+      "role": "heart, garnish and final presentation",
+      "origin": "reused after historical V2 review",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "N01",
+      "role": "simultaneous cleaning and litter-box setup",
+      "origin": "new in historical V3",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "N02",
+      "role": "tent-origin odor and nose reaction",
+      "origin": "new in historical V3",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "N03",
+      "role": "mask consequence and ordinary-bean bridge",
+      "origin": "new in historical V3",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "N04",
+      "role": "sealed waste bag and pink-handled perforated litter scoop",
+      "origin": "new in historical V3",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    },
+    {
+      "id": "N05",
+      "role": "green deodorizing spray, away from food",
+      "origin": "new in historical V3",
+      "must_not_control": "Any other identity, state, setting or action outside this assigned role"
+    }
+  ],
+  "retired": [
+    {
+      "id": "K01",
+      "reason": "Missing litter cause"
+    },
+    {
+      "id": "K02",
+      "reason": "Incorrect equipment-smoke cause"
+    }
+  ],
+  "human_approval": null
+}

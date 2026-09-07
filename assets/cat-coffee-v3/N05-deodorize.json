@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Reconstruct one clean photoreal vertical hygiene-resolution keyframe at the same outdoor coffee cart. The same orange-and-white cat holds a small unbranded green deodorizing spray can with one coherent paw and gives a short sanitizing spray toward the cleared work area after litter cleanup. The aerosol is a faint clean mist aimed away from coffee beans, cups and liquids; it is clearly odor-control cleanup, not milk, a drink, fire extinguisher or cooking ingredient. Preserve the orange cat's markings, realistic paws, compact grinder/cart, cream tent and outdoor skyline. Remove every background person, watermark, brand, logo, UI and legible text. No mask now, no silver cat, no human hand, no extra limbs, no indoor cafe and no spray entering food or equipment openings.",
+  "params": {
+    "images": [
+      "artifact://E17-DEODORIZE"
+    ],
+    "size": "1088x1920",
+    "quality": "high"
+  }
+}

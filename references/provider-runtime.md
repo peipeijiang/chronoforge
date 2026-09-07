@@ -1,90 +1,63 @@
-# Provider runtime reference
+# Paid execution and recovery
 
-## Contents
+Read [updrama-contract.md](updrama-contract.md) for the only maintained adapter profile, and [reference-execution.md](reference-execution.md) for artifact registration and lock commands.
 
-1. Runtime invariants
-2. UpDrama profile
-3. Paid-job state machine
-4. Ambiguous submission recovery
-5. Security
+## Before a paid batch
 
-## Runtime invariants
+1. Confirm the user-authorized models, exact job IDs, count and retry allowance. Image authorization and reference-lock approval are different events.
+2. Fetch and inspect the current guide/model snapshots. Local schema checks are only one part of this review.
+3. Validate planned story/timeline/beat coverage; validate **ready** reference bytes immediately before submission.
+4. Use one run directory and one creative writer for the project. The paid-create file lock serializes POSTs inside that run, not across arbitrary copies or machines.
+5. Submit using a versioned operator ID, such as `C02-v3-attempt1`. Keep request manifests immutable after approval.
 
-- Keep creative manifests immutable after reference lock.
-- Compile provider requests into separate runtime artifacts.
-- Hash requests and input assets.
-- Serialize paid creates with a single-writer lock.
-- Append and fsync `submit_intent` before POST.
-- Record task ID only after validating the current response contract.
-- Never automatically retry timeouts or connection loss after a paid POST.
-- Poll with a bounded interval and preserve all terminal results.
+## Ledger behavior
 
-## UpDrama profile
+The adapter writes and fsyncs `submit_intent` before POST. It records a known task ID, or an unresolved state. A process crash after intent is conservatively unresolved too.
 
-Refresh authenticated guide and model detail before each paid batch. At the time this skill was authored, the observed contract was:
+- Repeating an existing job ID with the same resolved bytes returns its known task ID, without POST.
+- Reusing that ID with different bytes is rejected.
+- An intent with no known task or evidence-backed `confirmed_no_task` blocks other submissions in its model lane.
+- HTTP errors, timeouts, invalid JSON and unexpected create envelopes are **not** safe reasons to replay POST.
+- This is local duplicate protection, **not provider idempotency**. Do not evade it by using a fresh run directory.
+- The adapter does not price jobs or track account-wide budgets. The agent must stay within the actual authorization.
 
-- media create: `POST https://api.lk888.ai/v1/media/generate`
-- discovery and status base: `https://api.lk888.ai/api`
-- preferred task status: `GET /v1/skills/task-status?task_id=...`
-- create request: top-level `model`, `prompt`, `params`
-- create success: `code == 200` and numeric `data.task_id`
-- terminal: `is_final == true`
-- success: `state == "success"` plus nonempty `result_url`
+## Unknown submission
 
-Treat this as a profile to verify, not an eternal guarantee. Static exported examples may drift.
+Use read-only provider task/account tools or support evidence to identify whether a task was created. Matching only model/time/count is insufficient if another submission could match. Never infer a task from a guessed ID.
 
-Useful model roles:
+Once there is reliable evidence, record one of:
 
-- `gpt-image-2`: reference-image reconstruction; current details determine limits and accepted sizes.
-- `omni_flash-10s`: fixed 10-second 720p reference video; current details determine image count and aspect ratios.
-
-## Paid-job state machine
-
-```text
-planned
-  → submit_intent_written
-  → submitting
-  → task_known → pending/running → success|failed
-  ↘ submission_rejected
-  ↘ unknown_submission
-  ↘ contract_anomaly
+```bash
+python3 scripts/updrama_runtime.py reconcile --run-dir RUN --job-id LEDGER_JOB_ID \
+  --task-id 123456 --evidence "Provider task record identifies this submission"
+python3 scripts/updrama_runtime.py reconcile --run-dir RUN --job-id LEDGER_JOB_ID \
+  --no-task --evidence "Provider confirmed no task was created"
 ```
 
-Recommended ledger record fields:
+Use the hashed ledger job ID, not the human-readable operator ID, here. Reconciliation cannot discover the truth itself. Only record verified evidence. Even confirmed no-task recovery does not authorize a new charge: a new attempt needs an authorized, new operator job ID.
 
-```json
-{
-  "record_type":"submit_intent",
-  "job_id":"stable-derived-id",
-  "operator_job_id":"human-readable-id",
-  "model":"model-name",
-  "request_sha256":"...",
-  "input_hashes":[],
-  "state":"submitting",
-  "recorded_at":"ISO-8601"
-}
+## Known task and original media
+
+Poll `status TASK_ID --run-dir RUN` or use:
+
+```bash
+python3 scripts/updrama_runtime.py collect TASK_ID --run-dir RUN \
+  --output RUN/media/containers/C01-v3.raw.mp4 --wait-seconds 40
 ```
 
-Do not put prompts or secret headers in the ledger when hashes suffice.
+`collect` polls in a short bounded window (individual network requests can add latency), yields `pending_resume_same_task` when unfinished, and can be resumed with the **same** task ID. It never submits. Terminal failure exits without retry. Success downloads original bytes without sending the API key to the result CDN, records SHA-256, and leaves QA pending. It refuses existing outputs and interrupted `.part` files. Inspect an interrupted download, then choose a new output path; never create another paid task to solve a download failure.
 
-## Ambiguous submission recovery
+Decode/probe after collection: a nonempty file is not necessarily valid media. Preserve raw files before crop/trim/re-encode. Keep result URLs and ledger private; publish only sanitized examples.
 
-When the POST may have reached the provider but no valid response was received:
+## Retake classification
 
-1. Mark `unknown_submission` and prohibit automatic retry.
-2. Stop same-model paid creates unless isolation is provable.
-3. Reconcile using provider usage/task history and submission time.
-4. Auto-adopt only when exactly one unmatched task can be proven and no concurrent same-model create occurred.
-5. Otherwise require human/provider support resolution.
+| Observation | Response |
+|---|---|
+| No rendered media / overload / refund | Provider failure, not evidence of a bad creative topology; request scoped retry approval |
+| Reference defines wrong setting, prop or causal state | Repair that reference, L1, new human lock; invalidate dependents |
+| Render exists, wrong motion/cut/beat order | Controlled prompt retake of the affected container |
+| Same boundary fails in baseline and one controlled retake | Consider splitting only that container; disclose new cost and seam |
+| Valid media, wrong trim/codec/audio mix | Local assembly repair; no paid video retake |
+| New source interpretation contradicts old acceptance | New story version, dependency invalidation, targeted regeneration |
 
-If the provider later supports idempotency keys or request-hash lookup, prefer those and update the adapter.
-
-## Security
-
-- Read keys only from provider-specific environment variables.
-- Never echo, serialize, screenshot, or include keys in final responses.
-- Validate URLs before download.
-- Keep source frames local unless their submission is explicitly authorized.
-- Resolve local source images to in-memory data URLs when supported; do not write expanded base64 requests to disk.
-- Remove recognizable people and source watermarks from generated reference assets when the task permits.
-- Confirm rights to reproduce the source and likenesses when use is not obviously authorized.
+One approved single retry means one new submission, not a retry-until-success loop.

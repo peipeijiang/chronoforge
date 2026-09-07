@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "case_only": true,
+  "hook": {
+    "mechanism": "An absurd outdoor feline coffee stall juxtaposes serious preparation with litter-box humor; odor reactions and cleanup sustain the visual pun before a satisfying oversized drink payoff.",
+    "beat_ids": [
+      "B01",
+      "B03",
+      "B17"
+    ]
+  },
+  "fidelity_boundary": "Historical V3 structural/semantic reconstruction, not literal feces entering food, pixel identity or verified exact source cut timing. Audio identity not established.",
+  "characters": [
+    {
+      "id": "orange-white",
+      "role": "coffee preparation and odor reaction"
+    },
+    {
+      "id": "silver-tabby",
+      "role": "litter/cleanup subplot and bean preparation"
+    }
+  ],
+  "beats": [
+    {
+      "id": "B01",
+      "visible_action": "Orange cat cleans while tabby squats in litter box; waste remains hidden.",
+      "initial_condition": true,
+      "terminal": false,
+      "cause": null,
+      "consequence": "B02",
+      "must_preserve": [
+        "Orange cat cleans while tabby squats in litter box; waste remains hidden."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B02",
+      "visible_action": "Tabby retreats into the tent.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B01",
+      "consequence": "B03",
+      "must_preserve": [
+        "Tabby retreats into the tent."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B03",
+      "visible_action": "Odor comes from tent; orange cat pinches its nose.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": [
+        "B01",
+        "B02"
+      ],
+      "consequence": "B04",
+      "must_preserve": [
+        "Odor comes from tent; orange cat pinches its nose."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B04",
+      "visible_action": "Orange cat puts on its own mask; approved human-removal adaptation required.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B03",
+      "consequence": "B05",
+      "must_preserve": [
+        "Orange cat puts on its own mask; approved human-removal adaptation required."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B05",
+      "visible_action": "Masked orange cat faces returning tabby holding ordinary beans.",
+      "initial_condition": true,
+      "terminal": false,
+      "cause": null,
+      "consequence": "B06",
+      "must_preserve": [
+        "Masked orange cat faces returning tabby holding ordinary beans."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B06",
+      "visible_action": "Grind beans and receive grounds into portafilter.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B05",
+      "consequence": "B07",
+      "must_preserve": [
+        "Grind beans and receive grounds into portafilter."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B07",
+      "visible_action": "Mask off during tamping; finish contact by trim point.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B06",
+      "consequence": "B08",
+      "must_preserve": [
+        "Mask off during tamping; finish contact by trim point."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B08",
+      "visible_action": "Tabby exits tent carrying tied opaque bag and perforated litter scoop.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B01",
+      "consequence": "B09",
+      "must_preserve": [
+        "Tabby exits tent carrying tied opaque bag and perforated litter scoop."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B09",
+      "visible_action": "Dispose of bag away from food; put scoop aside.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B08",
+      "consequence": "B10",
+      "must_preserve": [
+        "Dispose of bag away from food; put scoop aside."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B10",
+      "visible_action": "Extract espresso into small metal cup.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B07",
+      "consequence": "B11",
+      "must_preserve": [
+        "Extract espresso into small metal cup."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B11",
+      "visible_action": "Tabby makes a celebratory gesture.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B10",
+      "consequence": "B12",
+      "must_preserve": [
+        "Tabby makes a celebratory gesture."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B12",
+      "visible_action": "Two cats briefly tussle without identity fusion.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": null,
+      "consequence": "B13",
+      "must_preserve": [
+        "Two cats briefly tussle without identity fusion."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse",
+      "ambiguity": "The confrontation follows celebration; motivation is editorial interpretation, not directly demonstrated."
+    },
+    {
+      "id": "B13",
+      "visible_action": "Orange cat uses green deodorizer away from drink and beans.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B03",
+      "consequence": "B14",
+      "must_preserve": [
+        "Orange cat uses green deodorizer away from drink and beans."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B14",
+      "visible_action": "Pour dark brewed coffee into giant floral mug.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B10",
+      "consequence": "B15",
+      "must_preserve": [
+        "Pour dark brewed coffee into giant floral mug."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B15",
+      "visible_action": "Pour separate white milk into same mug.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B14",
+      "consequence": "B16",
+      "must_preserve": [
+        "Pour separate white milk into same mug."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B16",
+      "visible_action": "Shape foam heart and add green garnish.",
+      "initial_condition": false,
+      "terminal": false,
+      "cause": "B15",
+      "consequence": "B17",
+      "must_preserve": [
+        "Shape foam heart and add green garnish."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    },
+    {
+      "id": "B17",
+      "visible_action": "Present finished giant mug with both cats; historical prompt additionally requests a straw, not established as source fact.",
+      "initial_condition": false,
+      "terminal": true,
+      "cause": "B16",
+      "consequence": null,
+      "must_preserve": [
+        "Present finished giant mug with both cats; historical prompt additionally requests a straw, not established as source fact."
+      ],
+      "evidence_status": "historical reconstruction; verify source frames and adaptations before reuse"
+    }
+  ],
+  "prop_tracks": [
+    {
+      "prop": "mask",
+      "states": [
+        "absent",
+        "worn after odor reaction",
+        "absent during tamping; do not infer hygiene restored"
+      ]
+    },
+    {
+      "prop": "waste",
+      "states": [
+        "litter implication",
+        "contained bag with scoop",
+        "disposed away from food"
+      ]
+    },
+    {
+      "prop": "drink",
+      "states": [
+        "ordinary beans",
+        "grounds",
+        "espresso",
+        "milk",
+        "heart/garnish",
+        "giant floral mug"
+      ]
+    }
+  ],
+  "adaptations": [
+    "Human mask helper removed; historical prompt gives action to orange cat.",
+    "Graphic waste suppressed in planned references.",
+    "Incidental writing/background people removed in prompts.",
+    "Historical final prompt requests straw/tasting; not a verified fact from the reviewed source overview frames."
+  ]
+}

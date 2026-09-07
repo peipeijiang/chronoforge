@@ -1,118 +1,38 @@
-# Delivery contract and canary strategy
+# Delivery specification, dry runs and pilots
 
-This document defines the frozen delivery specification, zero-paid dry-run gate, phased canary strategy, audio policy, and QA metric boundaries for long-video semantic replication.
+Freeze a run-specific delivery contract: editorial duration, aspect ratio, output size/fps, framing policy, audio policy and tolerances. The historical vertical master used 720×1280, H.264/yuv420p, 60 fps, AAC 44.1 kHz stereo. These are an **example**, not universal requirements.
 
-## Frozen delivery specification
+Reference images need compatible composition, not identical pixel dimensions. A historical Image2 image returned 945×1665 rather than the requested 1088×1920 and was accepted after inspecting framing. Decide geometry tolerance in L1; do not force unnecessary paid retries for a harmless size difference. Conversely, never crop away an important interaction just to meet dimensions.
 
-Before any paid generation, freeze and version a `master_delivery` contract. All source crops, Image2 references, Omni containers, and assembly inputs must conform to this single geometry policy.
+## Two dry-run stages
 
-### Default vertical contract
+1. **Planned:** source evidence, story truth, timeline, ordered role bundles and action schedules are complete. Uncreated reference IDs may remain `artifact://ID`. Validate story, timeline, execution plan and planned requests. Use synthetic media to test assembly if changing topology/delivery settings.
+2. **Ready:** references actually exist, have current hashes, passed L1 and have human lock approval. Validate resolved requests, dependency freshness and authorization before video submission.
 
-- **Resolution:** 720×1280 (portrait 9:16)
-- **Frame rate:** 60/1 CFR (constant frame rate, not VFR)
-- **Time base:** 1/60000
-- **Video codec:** H.264, profile high, pixel format yuv420p
-- **Audio codec:** AAC, 44.1 kHz, stereo (2 channels)
-- **Geometry policy:** scale source proportionally to height 1280, then center-crop to width 720. Do NOT stretch or letterbox.
+Image generation precedes image QA and lock. Do not require generated references to exist during the pre-image dry run, or require reference lock before generating Image2 assets.
 
-If a different delivery spec is required (16:9, 24 fps, 1080p), change and re-freeze the contract BEFORE generating any paid assets. Do not mix geometries within one master.
+## Pilot strategy
 
-### Duration and quantization
+An optional risk-based pilot is part of the planned batch, not an extra mandatory video. Choose the segment that tests the actual risk (causal staging, interactions or an early trim deadline). If it passes and its dependencies remain current, reuse it in the final master and generate only the remaining jobs.
 
-At CFR, the encoder must produce an integer number of frames. For a target duration of 33.111723 seconds at 60 fps:
-- Required frames: ceil(33.111723 * 60) = 1987 frames
-- Encoded duration: 1987 / 60 = 33.116667 seconds
-- Quantization delta: 0.004944 seconds (< 1 frame, acceptable)
+A successful final-segment pilot does not validate earlier story causality. A 33-second case using four containers may generate one pilot plus three remaining clips, not five clips. Reference count is determined by roles and missing states, not a universal three/five/eleven-image recipe.
 
-Disclose the quantization delta in the final QA report.
+## Audio
 
-## Zero-paid dry-run gate
+- **generated:** use generated audio, check seams and listen to the mix; never claim original-audio identity.
+- **silent:** omit audio from the master.
+- **source reuse:** only with appropriate rights and verified timing; requires a separately reviewed mix workflow, not implemented by the bundled assembler.
 
-Before locking references and submitting any paid jobs, complete a zero-paid dry-run that produces:
+Changing a mix or making a silent version normally invalidates assembly/L3 only. Regenerate video only if the new audio requirement changes visible timing or action semantics. Do not impose blanket paid regeneration for an audio policy change.
 
-1. **Complete manifests:** `source.json`, `story-truth.json`, `timeline.json`, `reference-plan.json`, and all request JSONs for Image2 and Omni.
-2. **Validator passes:** `python3 scripts/validate_story.py` and `python3 scripts/validate_timeline.py` must return exit code 0.
-3. **Request schema validation:** `python3 scripts/updrama_runtime.py validate REQUEST` must pass for every generated request.
-4. **Simulated assembly:** Run `python3 scripts/assemble.py` with placeholder containers (e.g., 10-second black/silent videos) to verify the topology produces the target duration ± 1 frame.
-5. **Dry-run report:** Document the simulated duration, quantization delta, validator results, and request schema checks. This report must be reviewed and accepted before the reference lock.
+## Assembly and QA
 
-**Gate enforcement:** Do NOT proceed to paid submission if:
-- any validator fails;
-- any request fails schema validation;
-- the simulated assembly duration exceeds the target by more than 1 frame;
-- the dry-run report has not been reviewed and accepted.
+The assembler requires original input hashes and a reviewer decision in each container entry. Use `synthetic_test` only for test media; the output is flagged and cannot be delivered as a recreation. Generated audio requires an audio stream in every clip. The current framing implementation is center scale-and-crop; inspect its effect before accepting the master.
 
-## Canary strategy (P1 → P2 → P3)
+Integer CFR frames use **cumulative boundary rounding**. For 33.111723 seconds at 60 fps, the total is 1987 frames, 33.116667 encoded seconds, delta approximately +0.004944 seconds. Inspect frame budgets, output probe and full decode. The assembler preserves raw inputs and writes normalized intermediates in a unique directory; it refuses an existing master.
 
-For a new source or topology, phase paid generation to detect failures early:
+L3 must separately inspect all internal cuts, timeline-derived seams, trim boundaries and story payoff. Silence/black detection may help locate defects but must not reject intentional creative choices. No technical metric proves causal fidelity. A source frame sample is not evidence that audio was heard, nor that every unsampled action was seen.
 
-### Phase 1: Reference-only canary
-- Generate only the reference pack with Image2.
-- Run L1 QA on all reference assets.
-- If any reference fails (identity merge, watermark, anatomy), stop and revise the reference plan before generating video.
-- Cost: ~5 Image2 requests for a typical reference pack.
+## Delivery
 
-### Phase 2: Topology pilot (single container)
-- Choose one representative container (e.g., C04 if it has the most complex action and the shortest retained duration).
-- Generate only that container with Omni.
-- Run L2 QA: verify beats are present and ordered, internal cuts are hard (not morph), and the action completes before the trim point.
-- If the pilot fails topology QA (wrong beat order, morph, action incomplete), revise the prompt or references before generating the remaining containers.
-- Cost: 1 Omni request (~10 seconds).
-
-### Phase 3: Full batch
-- Generate all remaining containers.
-- Run L2 QA on each.
-- Assemble and run L3 QA on the master.
-
-**Rationale:** This strategy avoids generating 4 Omni containers when a reference or topology defect would invalidate all of them. The incremental cost is 1 pilot container, but the risk reduction is significant.
-
-## Audio policy
-
-Declare one of three audio strategies before paid generation:
-
-1. **Generated audio (Omni mix):** Use the audio tracks generated by Omni as the master mix. Do NOT claim source-audio identity or fidelity. This is the recommended default because Omni audio is synchronized with generated motion.
-2. **Source audio reuse:** Trim and align the source audio track to match the generated master timeline. This requires manual verification that the source audio semantics (dialogue, sound effects, timing) still align with the generated visuals. **Risk:** If generated motion timing drifts from source, audio-visual sync will break.
-3. **Silent master:** Produce a video-only master with no audio track. This is appropriate when the source audio cannot be reused and generated audio is not acceptable.
-
-**Contract enforcement:** The chosen audio policy must be documented in the run manifest and cannot change after Omni generation without regenerating all containers.
-
-## QA metric boundaries
-
-### Metrics NOT suitable for semantic replication
-
-- **VMAF (Video Multimethod Assessment Fusion):** Measures perceptual similarity at the pixel level. A semantic recreation will score low on VMAF even if the story, action order, and character states are correct, because pixel-level motion and texture differ.
-- **VBench:** Evaluates technical video quality (resolution, temporal consistency, object motion). It does not assess whether the video preserves the source's narrative structure, causal actions, or character continuity.
-- **ITU-T P.910 (Mean Opinion Score):** Measures subjective quality, not semantic fidelity. A high MOS does not guarantee the recreation preserved the source's story or action sequence.
-
-### Metrics used in ChronoForge
-
-- **L1 QA (references):** Human or vision-model inspection for identity, anatomy, state, contamination (watermark, extra limbs, identity merge).
-- **L2 QA (containers):** Beat presence and ordering, hard cuts vs. morph, action completion before trim, character/prop continuity.
-- **L3 QA (master):** Shot order, audio-visual seams at container boundaries (10/17/27 seconds for a 33-second example), setup/payoff preservation, disclosed quantization delta.
-
-## Delivery checklist
-
-The final delivery package must include:
-
-1. **Master video:** The assembled `.mp4` file with its SHA-256 hash.
-2. **Source fingerprint:** `source.json` with original duration, codec, geometry, and hash.
-3. **Editorial truth:** `story-truth.json` (beats, states, props) and `timeline.json` (shot boundaries, container topology).
-4. **Reference manifest:** `reference-pack.json` with asset URLs, hashes, and role assignments. This must be the locked version that passed L1 QA.
-5. **Request artifacts:** All Image2 and Omni request JSONs with their hashes.
-6. **Task provenance:** Task IDs, provider result URLs, and download timestamps from the job ledger.
-7. **QA observations:** Per-asset L1 QA, per-container L2 QA, and final L3 QA results.
-8. **Assembly manifest:** `assembly.json` with input container paths, retained durations, and target duration.
-9. **Master hash:** SHA-256 of the final `.mp4` file.
-
-**Excluded from delivery:**
-- API keys, authorization headers, or bearer tokens.
-- Provider balance, pricing detail, or temporary upload URLs.
-- Intermediate or rejected candidates (mark them `superseded` in the run directory but do not include in the delivery package).
-
-## Superseded assets
-
-If a new story audit or QA failure invalidates a previously accepted master:
-1. Mark the old master as `superseded` in the run manifest.
-2. Increment the version number (e.g., `master-v1.mp4` → `master-v2.mp4`).
-3. Do NOT delete the superseded master; preserve it for audit and comparison.
-4. Deliver only the latest non-superseded version.
+Provide master/hash, source fingerprint, story and timeline versions, ordered locked references, request fingerprints, task provenance, L1/L2/L3 reports, assembly report and disclosed limitations. Deliver only the current non-stale candidate. Preserve rejected/superseded assets locally for audit. Do not publish keys, private media, task IDs, account detail or result URLs as example data.

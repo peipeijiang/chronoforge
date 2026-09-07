@@ -1,0 +1,14 @@
+{
+  "model": "omni_flash-10s",
+  "prompt": "Generate exactly one vertical 9:16 photoreal 10.0-second video packaged for source story seconds 10.0-17.0; all required action must finish by 7.0s and the last clean frame may hold naturally through 10.0s. Natural outdoor plaza, coffee-grinder and light metal sounds; no dialogue or music. Reference roles in array order: R1 controls only outdoor cart geometry. R2 controls only both cat identities. R3 controls the opening causal bridge: orange cat already wears the white odor mask while silver tabby pours ordinary roasted coffee beans. R4 controls only bean-cup and grinder contact. R5 controls only orange-cat tamping contact. Timeline: 0.0-2.0s, the silver tabby pours whole roasted coffee beans from a small metal cup into the compact grinder while the orange-and-white cat, still wearing the white mask because of the preceding tent odor, watches suspiciously. The image sequence may suggest a cat-coffee wordplay, but never show feces, litter or waste entering food. At 2.0s direct hard cut. 2.0-4.2s: grinder runs and orange cat receives fresh grounds into a portafilter. At 4.2s direct hard cut. 4.2-7.0s: orange cat removes the mask or leaves it off to work, distributes the grounds and presses a metal tamper straight down into the portafilter; silver tabby observes. By 7.0s the tamp is fully completed; 7.0-10.0s hold a stable completed preparation pose with subtle natural motion, no new action. Cats stay unclothed with feline paws. Exclude graphic waste, human hands, people, aprons, indoor cafe, extra cats, floating beans, transformed vessels, duplicate limbs, watermark, UI, logo, legible text, dissolve, morph and action after 7.0s.",
+  "params": {
+    "images": [
+      "artifact://G01",
+      "artifact://G02",
+      "artifact://N03",
+      "artifact://K03",
+      "artifact://K04"
+    ],
+    "aspect_ratio": "9:16"
+  }
+}

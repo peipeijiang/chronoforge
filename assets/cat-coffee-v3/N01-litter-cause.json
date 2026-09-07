@@ -1,0 +1,11 @@
+{
+  "model": "gpt-image-2",
+  "prompt": "Reconstruct one clean photoreal vertical story keyframe from the reference. At the same outdoor city-plaza coffee cart, the orange-and-white cat is in the left foreground seriously wiping the compact espresso machine with a white cloth, while the stocky silver-gray tabby is simultaneously in a clean yellow-and-white litter box immediately behind and to the right, shown only in a natural squatting toilet posture. The litter fully hides any waste: no visible feces, anus, graphic anatomy or bodily-fluid detail. Preserve the exact two-cat fur identities, outdoor skyline, cream tent, compact cart and realistic feline paws. The comic contrast between careful coffee cleaning and the nearby litter-box act must be instantly readable. Remove the pointing human hand, every person, watermark, logo, UI and legible text. No machine smoke, no mask yet, no clothing, no human limbs, no extra cat, no merged bodies and no indoor cafe.",
+  "params": {
+    "images": [
+      "artifact://E13-LITTER-SQUAT"
+    ],
+    "size": "1088x1920",
+    "quality": "high"
+  }
+}
