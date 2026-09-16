@@ -1,5 +1,9 @@
 # Artifact lifecycle and operational handoff
 
+For v3 use tt-image-2.5 (scoped fallback tt-image-2) wherever the historical instructions below say Image2. Read prompt-and-reference-contract.md for current input roles. Register source/product evidence and whole-film contracts before derived references. Copy product inputs into the run; do not modify the external skill. Every generated reference and container records all actual upstream dependencies.
+
+V3 QA additionally requires the route checks in qa-contract.md. The minimal historical report below is insufficient for a v3 run. A continuation boundary is a registered reference derived from an L2-accepted container, with boundary provenance and explicit warning review before it enters the current lock.
+
 The original production used local evidence frames, Image2 outputs, a user-locked pack, ordered per-container references, generated videos and layered QA. Use the same structure in a portable run, without copying the original approval or private URLs.
 
 ## Register versioned assets

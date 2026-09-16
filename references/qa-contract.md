@@ -1,5 +1,23 @@
 # Media QA contract
 
+## Three-route checks (v3)
+
+All routes use the same L1 reference / L2 raw container / L3 actual delivery master layers. Checks compare against the selected route's truth, not a universal source-video test.
+
+| Route | L1 | L2 | L3 |
+|---|---|---|---|
+| recreation | source/adaptation identity, setting, prop state | required actions, order, reaction and continuity | whole-source setup/payoff and approved adaptations |
+| product_video | actual SKU/structure/scale, planned original scene | valid use, supported claim/proof, invariant product | coherent whole ad, accurate speech/text and readable pacing |
+| hybrid | product identity plus source-inspired target composition | adapted action correct for actual product | source-inspired story with truthful product integration |
+
+V3 hash-bound reports include checks, each with status and actual evidence. Required common names: L1 identity, geometry, reference_roles; L2 beat_coverage, state_continuity, audio, trim_completion; L3 whole_story, seams, audio, text_readability. Product/hybrid add product_fidelity and claim_accuracy; recreation/hybrid add source_adaptation. An accepted report requires each applicable check to pass; not_applicable requires a reason. Static L1 cannot verify motion; an identity sheet may mark claim_accuracy not_applicable if it contains no claim. Unknown/failed checks cannot become accepted. Still describe the actual limitation in the observations.
+
+L2 also reviews every internal cut and every required beat, with denser sampling for action. Audio must be listened to separately; an ASR transcript does not prove seamless mixing. Optional warnings must be disclosed, and continuation warnings explicitly reviewed before using a boundary. Product B-roll need not invent causal actions: judge its declared supporting purpose.
+
+Before image generation, perform planned evidence/script review: unresolved product claims, source coverage, plausible actions, whole-film progression, reference roles, timing and audio/text. This complements rather than replaces L1. L3 tests communication, not predicted conversion or guaranteed sales performance.
+
+Assembly followed by text/audio changes requires fresh L3 on the changed master. Check subtitle duration, approved claim wording, selected SKU, platform preview/safe-zone template when available and actual seam/audio behavior. Do not claim a fixed UI-safe rectangle works for every placement.
+
 ## Contents
 
 1. L1 reference QA

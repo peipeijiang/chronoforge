@@ -1,119 +1,86 @@
 ---
 name: chronoforge
-description: Recreate videos longer than a generation model's clip limit using full-source evidence, story and continuity contracts, reference images, fixed-duration video jobs, layered QA and deterministic assembly. Use for source-led video remakes with Image2/Omni-style workflows without LoRA training.
+description: Create reference-guided multi-clip films from uploaded videos (recreation), product page links (original ads), or both (product-constrained adaptation), with evidence, whole-film stories, locked references, safe paid execution and layered QA.
 ---
 
-# ChronoForge · v2
+# ChronoForge · v3
 
-Reconstruct what the viewer understands, not just the objects visible in selected frames. Target reference-guided structural and semantic recreation; do not promise pixel, motion, face or original-audio identity.
+Route the input before analysis. Preserve evidence, versioned editorial intent and asset lineage through generation and assembly. Do not promise exact faces, pixels, motion or original audio.
 
-## Working rules
+## 1. Route and initialize
 
-- Analyze the full source before spending on references. Keep observations, inferences and unknowns separate.
-- Freeze **versioned** editorial truth. Provider containers package the edit; they do not define source cuts. A later source audit creates a new version and invalidates affected downstream assets.
-- Connect cause → visible action → reaction → consequence/payoff. Track character and prop states across cuts.
-- Image2 generates references **before** L1 and human lock. Only paid **video** generation requires the locked reference pack.
-- The routine creative human gate is reference lock. Paid-batch, out-of-budget retry and scope-change authorization are separate; a lock is not permission for unlimited charges.
-- Preserve raw results and lineage. A technical pass is not semantic acceptance. Retake the earliest responsible layer.
-- No LoRA or local GPU training is required by this workflow. Provider generation still incurs API charges; local FFmpeg work consumes compute.
-- Never log keys or publish private source media, account details, task/result URLs or expanded reference data.
+| Input | Route | Evidence and creative work |
+|---|---|---|
+| Uploaded/local video | recreation | Read/use watch; inspect the entire source, then reconstruct its story |
+| Product page link | product_video | Read/use product-ugc-pipeline; collect complete evidence, author an original whole-film story |
+| Product link + uploaded/local video | hybrid | Both evidence paths; product truth constrains the source-inspired adaptation |
+| Neither, ambiguous input, multiple unclear targets | Ask one focused question | Never silently select a product or invent a source |
 
-## Routing and references
-
-Use the installed `watch` skill for source/frame evidence; read its instructions before invoking it. If unavailable, use ffprobe/FFmpeg plus direct frame inspection and disclose coverage/audio limitations. Watch does not automatically prove continuous visual or audio understanding.
-
-Read these at their corresponding stage:
-
-| Stage | Required reference |
-|---|---|
-| Source analysis and creative truth | [story-compiler.md](references/story-compiler.md) |
-| Artifact registration, lock, revision and handoff | [reference-execution.md](references/reference-execution.md) |
-| Before UpDrama calls | [provider-runtime.md](references/provider-runtime.md), [updrama-contract.md](references/updrama-contract.md) |
-| Asset/video acceptance | [qa-contract.md](references/qa-contract.md) |
-| Pilot, assembly and delivery | [delivery-and-canary.md](references/delivery-and-canary.md) |
-| Restoring an incomplete prior run or learning from the original production | [v2-restoration-audit.md](references/v2-restoration-audit.md) |
-
-Other creative skills may inform judgment when installed and relevant; they are not mandatory runtime dependencies or parallel orchestrators.
-
-## 1. Initialize and audit the complete source
+Test the combined case first. A bare link is a candidate product page: inspect it before confirming the route. A video-only page requires clarification/upload; it does not automatically invoke watch. Ancillary product-page video does not turn a product job into a remake. Competitor-link research does not invoke watch.
 
 ```bash
-python3 scripts/init_run.py SOURCE_VIDEO --out RUN --provider-clip-seconds 10 --aspect-ratio 9:16
+python3 scripts/init_run.py /path/source.mp4 --out RUN
+python3 scripts/init_run.py --product-url 'https://shop.example/product' --duration 30 --out RUN
+python3 scripts/init_run.py /path/source.mp4 --product-url 'https://shop.example/product' --duration 30 --out RUN
 ```
 
-Probe/hash the source; inventory existing analysis before extracting again. Inspect a full-duration pass, then dense windows at causal actions, reactions, prop transitions and ambiguous cuts. Read every frame required by the chosen analysis pass. Record timestamps from the extraction manifest, not guessed filenames.
+Read [route-workflows.md](references/route-workflows.md) for the selected route. Source-bearing routes also read [story-compiler.md](references/story-compiler.md). Session/region-sensitive product pages use ego-browser first through product-ugc-pipeline. Never bypass a login or challenge.
 
-Write `source-evidence.json`: visible facts, editorial inference, uncertainty, evidence paths/time ranges, coverage, dialogue/music/effects and what audio was actually heard. If key actions remain uncertain, inspect their windows before designing them.
+## 2. Freeze evidence and whole-film story
 
-## 2. Explain the appeal and freeze creative truth
+- Source routes retain full-duration media/timecode/visual/transcript/audio/uncertainty evidence. A frame sample does not prove audio was heard or an unseen action occurred.
+- Product routes require the complete manifest image set, per-image vision, brief, selected SKU, claim ledger and source-backed operation/risk assessment. Reviews and competitor research are optional. Mark inferred buyer motivations as hypotheses.
+- Codex authors one complete film before dividing it into jobs. Multiple creative variants are multiple films, never automatically successive chapters.
+- Preserve cause/action/reaction/payoff where narrative requires it. Detail, establishing and montage beats instead declare supports and editorial_purpose; do not invent causal events.
+- Version story, timeline and plan. Observed time stays in source_range; chosen edit time uses editorial_range. Product originals have no source timecodes. Explicitly record adaptations in source-bearing routes.
 
-Answer: What is the opening hook? Why does the viewer keep watching? Which setup creates expectation, what escalates it, and how is it paid off? For every important action, explain the reason and the state it changes.
+Run validate_story.py, validate_timeline.py and validate_plan.py on frozen contracts. These are structural checks, not semantic acceptance.
 
-Compile story beats, observed shot boundaries, character roles/state tracks, prop lifecycles, audio intent and must-preserve/may-drift fields. Explicitly record approved adaptations such as removing a human helper: who now performs that helper's causal action? Do not silently call a rewritten action a source observation.
+## 3. Generate, inspect and lock references
 
-Version the story/timeline contracts. Maintain evidence → beat → reference role → container action → QA observation traceability. Use `validate_story.py` as a structural check, not proof of understanding.
+Read [prompt-and-reference-contract.md](references/prompt-and-reference-contract.md) and [reference-execution.md](references/reference-execution.md).
 
-## 3. Package the editorial timeline
+Default all image work to LK888/upDrama **tt-image-2.5**: identity, optional operation grid, storyboard and scene endpoints. **tt-image-2** is the only planned fallback, after a known terminal failure within authorized attempts. Unknown submissions require reconciliation before switching models. No LaoZhang image fallback or VEO default. Preserve historical gpt-image-2 assets; new v3 runs reject that legacy model.
 
-Group adjacent complete action units into fixed-duration provider containers. Keep measured source cuts distinct from chosen local prompt cuts. Long source shots may span containers through `shot_segments`; preserve their editorial identity.
+Canonical source photos govern product identity; generated sheets are secondary guidance. Scene endpoints are single undivided photos; storyboard grids are role-labelled planning references. High-risk folding/assembly/connection routes generate the verified ready state; real footage or separately produced endpoint edits communicate omitted transitions.
 
-For `omni_flash-10s`, each paid request outputs 10 seconds. Choose retained intervals from the story, complete all actions before each trim point, and put only a stable hold in the discarded tail. The minimum count ceil(duration/10) is a capacity lower bound, not a universally sufficient topology.
+Register assets with actual source/story dependencies, provider/request/hash and role/exclusions. Do L1 using built-in vision and media checks, then obtain the user's reference-pack lock. Images are generated BEFORE L1 and human lock. Reuse sound assets and revise only affected dependencies.
 
-Write timeline and execution plan. Validate with:
+## 4. Compile each video request
 
 ```bash
-python3 scripts/validate_timeline.py RUN/manifests/timeline.json
-python3 scripts/validate_plan.py RUN/manifests/execution-plan.json
+python3 scripts/compile_prompt.py --run-dir RUN --plan RUN/manifests/execution-plan.json --job C01 --output RUN/requests/video/C01-v1.json
 ```
 
-The sanitized 33.111723-second [case plan](assets/cat-coffee-v3/execution-plan.json) uses four jobs retaining 10 + 7 + 10 + 6.111723 seconds. Its generated action timings are not measured source cut times and must not be imposed on a new video.
+The compiler checks evidence, story, timeline, beat coverage and reference roles, writes a dependency fingerprint, and rejects overlong prompts rather than truncating required beats. The agent still reviews meaning.
 
-## 4. Generate, inspect and lock references
+- New/independent scenes: **omni_flash-10s**. Product routes normally use storyboard + product identity; recreation uses role-selected character/environment/prop/state references.
+- Continuous shots: **omni_flash-10s-fl**, preceding accepted container's true last frame first, target end frame second. Register boundary provenance and L1, extend the human lock, then compile. Only accepted L2 can feed continuation; warnings need explicit continuation review.
+- Deliberately variable 4/6/8/10-second jobs: **omni-flash**. Differently named routes are not interchangeable.
 
-Plan global identity/environment/hero-prop references and additional beat/state/contact references only where they provide control. Each ordered slot has a role and exclusions; do not let a style/identity image override the action or setting.
+Do not force every C02 into continuation. New scene cuts use independent jobs. Do not send raw product photos alone as scene references. Never hardcode “image 2 is the product” across modes. Apply only relevant prohibitions and invariant camera/person/environment fields; planned cuts may change them. Generate text-free visuals; white labels/captions belong to postproduction.
 
-Register source frames and contracts. Write `gpt-image-2` requests using `artifact://ID` source or prior-reference inputs, size and quality. Run the planned dry-run, fetch/review provider details, obtain exact image-batch authorization, and submit. Download/hash originals, inspect them at L1, and only then show the recommended pack for human lock.
+## 5. Safe paid execution
 
-A reuse/retire/new reference table is required when revising a prior pack. Do not regenerate good assets merely to equalize count or dimensions; do not reuse a visually attractive asset whose state contradicts the story.
-
-Record actual L1 findings, roles, hashes and user approval through `workflow.py`. The reference-execution guide supplies commands. Never copy approval from an example or earlier incompatible version.
-
-## 5. Compile executable prompts and pass the ready gate
-
-Each prompt states model duration/aspect/style/audio, ordered reference roles, local action windows, cuts, actor/contact geometry, cause and state constraints, trim deadline, hold and exclusions. State what is implied rather than literally shown.
-
-Cross-check the prompt against the execution plan; planned local cuts cannot overwrite evidence. Check required beats across the whole movie, not only within the pilot.
+Read [provider-runtime.md](references/provider-runtime.md) and [updrama-contract.md](references/updrama-contract.md). Refresh and inspect capabilities before each authorized batch; record reviewed snapshot hashes. V3 ready/submission checks enforce the reviewed model profile and current compiled video plan, then resolve actual reference bytes and human lock.
 
 ```bash
 python3 scripts/updrama_runtime.py preflight --run-dir RUN
 python3 scripts/updrama_runtime.py validate REQUEST --ready --run-dir RUN
-```
-
-Inspect saved preflight bodies. `fetched_review_required` is not automatic contract approval. Ready validation resolves reference bytes in memory and enforces the current human lock for Omni. Before submitting, verify actual paid authorization and unresolved ledger state.
-
-## 6. Generate and preserve each container
-
-Use an optional risk-based pilot within the authorized batch; reuse a passing, current pilot in the master. Its acceptance does not certify unrelated story sections.
-
-```bash
 python3 scripts/updrama_runtime.py submit REQUEST --run-dir RUN --job-id C01-v1-attempt1 --confirm-paid I_UNDERSTAND_THIS_IS_PAID
 python3 scripts/updrama_runtime.py collect TASK_ID --run-dir RUN --output RUN/media/containers/C01-v1.raw.mp4 --wait-seconds 40
 ```
 
-Creates are serialized per run. Known jobs resume without another POST; unknown submissions block the model lane pending evidence-backed reconciliation. A failed download is not a reason to regenerate video. Record task provenance and raw media hashes before transformation.
+Preserve serial paid POSTs, fsynced submit intent, known-task reuse and unknown-submission lane blocking. Independent known jobs may be polled/downloaded concurrently. Continuation waits for prior L2/boundary approval. Do not import product-ugc's automatic POST retry, paid regeneration, provider substitution or concurrent-create behavior. A download failure resumes the same task. Reference lock and batch count/retry authorization remain distinct; reuse applicable user authorization, never manufacture it.
 
-## 7. Inspect L2 and repair the responsible layer
+## 6. L2, assembly and L3
 
-Run full decode/probe and collect timestamped evidence with `media_qa.py`. Inspect every required beat, action order, cause/reaction, character/prop state, anatomy, contact, internal cut and retained deadline; listen separately for audio. Dense sampling supplements rather than replaces necessary playback.
+Read [qa-contract.md](references/qa-contract.md) and [delivery-and-canary.md](references/delivery-and-canary.md). All routes use L1/L2/L3 with route-specific checks. Record actual evidence and limits; unknown is not a pass. Unavailable built-in vision requires an explicitly working alternative and disclosure; never silently restore LaoZhang or MiniMax vision.
 
-Record per-beat L2 observations and warnings in separate `QA_DIR/C01.json` etc. reports, then validate with `validate_plan.py PLAN --qa-dir QA_DIR --require-qa`. Never mutate a frozen plan just to attach QA. Register accepted containers with **all** actual reference/contract dependencies. No helper infers semantic pass from file existence.
+L2 inspects full decode, every required beat, motion/contact, internal cuts, product/character state, audio and completion before trim. Register accepted raw containers with every actual dependency. Retake the earliest responsible layer: evidence/reference, generated motion or local assembly.
 
-Distinguish provider/no-result failures from rendered creative failures. A controlled rendered retake changes one identified variable. Consider a costed topology split only after repeated evidence of the same boundary problem. Pure assembly errors stay local.
+V3 assembly manifests use schema_version 3 and run_dir; assemble.py checks current registered L2 acceptance and original hashes before trimming, normalization and concatenation. Inspect center-crop framing. Postproduction adds reviewed white text/voiceover/music to a new version, then full L3 checks the actual delivery master. Bundled assembly supports generated or silent audio; custom text/mix requires local FFmpeg/editing work, never claim it was automatically rendered.
 
-## 8. Assemble, review the master and deliver
+Deliver the current master and private provenance/QA package. Preserve raw/rejected/superseded assets. Never publish private product/account data, expanded image payloads, keys or provider task/result URLs. Restore old runs using [v2-restoration-audit.md](references/v2-restoration-audit.md); v2 contracts remain compatible and must not be silently relabelled v3.
 
-Check selected registered containers for freshness. Build the assembly manifest with raw-file hashes, L2 decisions, retained seconds and the delivery contract. Run `assemble.py`; it refuses overwritten masters and validates cumulative frame budgets and full decode.
-
-L3 compares the whole movie with current story truth: setup/payoff, transitions, trim completion, framing and audio—not merely codec/duration. Sample actual timeline seams with `media_qa.py --seams ...`. Quantify CFR duration delta and disclose allowed visual deviations.
-
-Deliver the current master plus private provenance/QA package. Do not deliver synthetic test output or stale/superseded candidates. If re-audit changes the story, invalidate declared dependents through `workflow.py invalidate`, preserve prior files, and rebuild only the affected layers.
+For verified coverage and remaining execution gates, see [v3-route-audit.md](references/v3-route-audit.md).

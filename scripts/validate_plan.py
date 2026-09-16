@@ -17,16 +17,26 @@ def validate(plan, story):
     for job in jobs:
         label = job['id']
         refs = job.get('references', [])
-        if not 1 <= len(refs) <= 7 or any(not r.get('role') or not r.get('id') for r in refs):
+        model = job.get('model', 'omni_flash-10s')
+        cap = {'omni_flash-10s': 7, 'omni_flash-10s-fl': 2, 'omni-flash': 3}.get(model, 0)
+        if not 1 <= len(refs) <= cap or any(not r.get('role') or not r.get('id') for r in refs):
             errors.append(label + ': need 1-7 ordered role-labelled references')
+        if model == 'omni_flash-10s-fl' and ([r.get('role') for r in refs] != ['boundary_frame', 'target_end_frame'] or not job.get('continuation_of')):
+            errors.append(label + ': continuation requires parent and ordered boundary/target images')
         keep = float(job['retain_seconds'])
         generated = float(job['generated_seconds'])
-        if not math.isfinite(keep) or not 0 < keep <= generated or generated != 10:
+        allowed = (4, 6, 8, 10) if model == 'omni-flash' else (10,)
+        if not math.isfinite(keep) or not 0 < keep <= generated or generated not in allowed:
             errors.append(label + ': invalid Omni duration/trim')
+        deadline = float(job.get('completion_deadline', keep))
+        if not math.isfinite(deadline) or not 0 < deadline <= keep:
+            errors.append(label + ': invalid completion deadline')
+        if plan.get('schema_version', 2) >= 3 and not job.get('purpose'):
+            errors.append(label + ': whole-film container purpose required')
         cursor = 0.0
         for action in job.get('actions', []):
             start, end = map(float, action['local_range'])
-            if not all(map(math.isfinite, (start, end))) or not 0 <= start < end <= keep or start < cursor:
+            if not all(map(math.isfinite, (start, end))) or not 0 <= start < end <= deadline or start < cursor:
                 errors.append(label + ': action out of order or outside retained range')
             cursor = end
             if not action.get('instruction') or not action.get('beat_ids'):

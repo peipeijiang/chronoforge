@@ -20,7 +20,9 @@ def main() -> int:
         raise ValueError('non-finite JSON number: ' + value)
     data = json.loads(pathlib.Path(args.timeline).read_text(encoding="utf-8"), parse_constant=bad_constant)
     errors: list[str] = []
-    duration = float(data.get("source_duration", 0))
+    modern = data.get('mode') in ('recreation', 'product_video', 'hybrid')
+    range_key = 'editorial_range' if modern else 'source_range'
+    duration = float(data.get('editorial_duration', 0) if modern else data.get('source_duration', 0))
     limit = float(data.get("provider_clip_seconds", 0))
     shots = data.get("editorial_shots", [])
     containers = data.get("containers", [])
@@ -38,9 +40,9 @@ def main() -> int:
         cursor = 0.0
         for i, item in enumerate(items):
             try:
-                start, end = map(float, item["source_range"])
+                start, end = map(float, item[range_key])
             except Exception:
-                errors.append(f"{label}[{i}] has invalid source_range")
+                errors.append(f"{label}[{i}] has invalid {range_key}")
                 continue
             if not all(map(math.isfinite, (start, end))) or end <= start:
                 errors.append(f"{label}[{i}] end must be greater than start")
@@ -51,17 +53,29 @@ def main() -> int:
             errors.append(f"{label} ends at {cursor}, expected {end_target}")
 
     if not all(map(math.isfinite, (duration, limit))) or duration <= 0 or limit <= 0:
-        errors.append("source_duration and provider_clip_seconds must be positive")
+        errors.append("timeline duration and provider_clip_seconds must be positive")
     check_ranges(shots, "editorial_shots", duration)
     check_ranges(containers, "containers", duration)
 
-    shot_ranges = {x.get("id"): tuple(map(float, x.get("source_range", (0, 0)))) for x in shots}
+    if modern:
+        for shot in shots:
+            source_range = shot.get('source_range')
+            if data['mode'] == 'product_video' and source_range is not None:
+                errors.append('product originals must not fabricate source timecodes')
+            if data['mode'] in ('recreation', 'hybrid'):
+                if source_range is None and not shot.get('adaptation_reason'):
+                    errors.append('source-backed shots need source_range; new shots need adaptation_reason')
+                if source_range is not None:
+                    lo, hi = map(float, source_range)
+                    if not all(map(math.isfinite, (lo, hi))) or not 0 <= lo < hi <= float(data.get('source_duration', 0)):
+                        errors.append('source_range outside measured source')
+    shot_ranges = {x.get("id"): tuple(map(float, x.get(range_key, (0, 0)))) for x in shots}
     owned: dict[str, list[tuple[float, float]]] = {sid: [] for sid in shot_ranges}
     for i, c in enumerate(containers):
         provider_duration = float(c.get("provider_duration", 0))
         retain_duration = float(c.get("retain_duration", 0))
         deadline = float(c.get("completion_deadline", retain_duration))
-        start, end = map(float, c.get("source_range", (0, 0)))
+        start, end = map(float, c.get(range_key, (0, 0)))
         if not all(map(math.isfinite, (provider_duration, retain_duration, deadline))) or min(provider_duration, retain_duration, deadline) <= 0:
             errors.append(f'containers[{i}] durations/deadline must be finite and positive')
         if provider_duration > limit + EPS:
@@ -78,9 +92,9 @@ def main() -> int:
                 errors.append(f"containers[{i}].shot_segments[{j}] references unknown shot {sid!r}")
                 continue
             try:
-                seg_start, seg_end = map(float, segment["source_range"])
+                seg_start, seg_end = map(float, segment[range_key])
             except Exception:
-                errors.append(f"containers[{i}].shot_segments[{j}] has invalid source_range")
+                errors.append(f"containers[{i}].shot_segments[{j}] has invalid {range_key}")
                 continue
             if seg_start < start - EPS or seg_end > end + EPS or seg_end <= seg_start:
                 errors.append(f"containers[{i}].shot_segments[{j}] is outside its container or empty")

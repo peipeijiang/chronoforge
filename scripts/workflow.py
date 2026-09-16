@@ -82,6 +82,20 @@ def record_qa(root, aid, report_file):
         raise ValueError('reviewer and actual observations required')
     if report['decision'].startswith('accepted') and report.get('technical_pass') is not True:
         raise ValueError('technical pass required, separately from semantic decision')
+    run_path = pathlib.Path(root) / 'run.json'
+    if run_path.exists() and str(read(run_path).get('schema_version', '2')).startswith('3.'):
+        from routes import required_qa
+        checks = report.get('checks', {})
+        for name in required_qa(read(run_path)['mode'], asset['kind']):
+            check = checks.get(name, {})
+            if not check.get('evidence'):
+                raise ValueError('route QA needs evidence for ' + name)
+            if report['decision'].startswith('accepted') and check.get('status') not in ('pass', 'not_applicable'):
+                raise ValueError('unknown/failed QA cannot be accepted: ' + name)
+            if check.get('status') == 'not_applicable' and not check.get('reason'):
+                raise ValueError('not_applicable requires a reason: ' + name)
+            if check.get('status') == 'not_applicable' and name not in {'audio', 'text_readability', 'claim_accuracy', 'seams'}:
+                raise ValueError('required visual/story check cannot be waived: ' + name)
     asset['qa'] = report
     asset['status'] = 'rejected' if report['decision'] == 'rejected' else 'accepted'
     write(pathlib.Path(root) / 'manifests/artifacts.json', data)

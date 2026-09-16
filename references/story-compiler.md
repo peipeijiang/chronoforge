@@ -1,5 +1,13 @@
 # Story compiler reference
 
+## V3 route semantics
+
+Source evidence applies only to recreation/hybrid. Product originals derive a new whole-film story from product evidence, reviewed claims and creative hypotheses. Read route-workflows.md. Story mode, timeline mode and execution plan mode must agree. Hybrid stories include an explicit adaptation_map.
+
+V3 distinguishes measured source_range from chosen editorial_range. Keep source ranges only where observed; product originals must not invent them. Multiple variants mean multiple films, whereas C01/C02 are containers inside one film. The provider duration never defines the editorial cuts.
+
+Narrative beats retain cause/action/reaction/consequence. Supporting beats use kind=detail|establishing|montage with supports (beat IDs) and editorial_purpose instead of invented causality. Single-state props are valid with configuration_lock=true. Product beats map selling points to claim_ids in claim-ledger.json. Older examples below retain v2 source-only schema for compatibility.
+
 ## Contents
 
 1. Evidence schema

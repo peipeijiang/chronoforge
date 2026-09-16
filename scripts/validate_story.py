@@ -33,11 +33,14 @@ def main() -> int:
         initial = beat.get("initial_condition") is True
         terminal = beat.get("terminal") is True
         declared = bool(beat.get("ambiguity"))
-        if not initial and not beat.get("cause") and not declared:
+        supporting = beat.get('kind') in ('detail', 'establishing', 'montage')
+        if supporting and (not beat.get('supports') or not beat.get('editorial_purpose')):
+            errors.append(f'{label}: supporting shot needs supports and editorial_purpose')
+        if not supporting and not initial and not beat.get("cause") and not declared:
             errors.append(f"{label}: missing cause; mark initial_condition or declare ambiguity")
-        if not terminal and not beat.get("consequence") and not beat.get("payoff") and not declared:
+        if not supporting and not terminal and not beat.get("consequence") and not beat.get("payoff") and not declared:
             errors.append(f"{label}: missing consequence/payoff; mark terminal or declare ambiguity")
-        for field in ("cause", "consequence", "payoff"):
+        for field in ("cause", "consequence", "payoff", "supports"):
             ref = beat.get(field)
             refs = ref if isinstance(ref, list) else [ref]
             for item in refs:
@@ -46,7 +49,7 @@ def main() -> int:
     props = data.get("prop_tracks", [])
     for i, prop in enumerate(props):
         states = prop.get("states", [])
-        if len(states) < 2:
+        if len(states) < 2 and not (len(states) == 1 and prop.get('configuration_lock')):
             errors.append(f"prop_tracks[{i}] must contain at least two states")
     print(json.dumps({"status":"pass" if not errors else "fail","errors":errors}, ensure_ascii=False))
     return 0 if not errors else 2

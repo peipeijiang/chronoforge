@@ -8,7 +8,7 @@ import pathlib
 import subprocess
 import tempfile
 from media_qa import probe
-from workflow import sha, write
+from workflow import sha, write, registry, current
 
 
 def run(cmd):
@@ -53,8 +53,25 @@ def main():
     budgets = frame_budgets(durations, fps)
     target = sum(durations)
     sources = []
+    root = (base / data['run_dir']).resolve() if data.get('run_dir') else None
+    if data.get('schema_version', 2) >= 3 and root is None:
+        raise ValueError('v3 assembly requires run_dir for registry-backed L2 verification')
+    if data.get('schema_version', 2) >= 3:
+        plan = json.loads((root / 'manifests/execution-plan.json').read_text())
+        timeline = json.loads((root / 'manifests/timeline.json').read_text())
+        expected = [(j.get('asset_id', j['id']), float(j['retain_seconds'])) for j in plan['jobs']]
+        if expected != [(c['id'], keep) for c, keep in zip(clips, durations)]:
+            raise ValueError('assembly order/trim differs from frozen execution plan')
+        if abs(target - float(timeline['editorial_duration'])) > 1e-6:
+            raise ValueError('assembly duration differs from editorial timeline')
     for c, keep in zip(clips, durations):
         source = (base / c['file']).resolve()
+        if root:
+            record = current(root, registry(root), c['id'])
+            if record['kind'] != 'container' or record['status'] != 'accepted' or (root / record['file']).resolve() != source:
+                raise ValueError('assembly input must match a current L2-accepted registered container')
+            if c.get('qa_decision') != record.get('qa', {}).get('decision'):
+                raise ValueError('assembly QA decision differs from registry')
         metadata = probe(source)
         video = next(s for s in metadata['streams'] if s['codec_type'] == 'video')
         if float(video.get('duration', metadata['format']['duration'])) + 1 / fps < keep:

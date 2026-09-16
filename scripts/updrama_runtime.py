@@ -20,7 +20,9 @@ from workflow import resolve, sha
 
 MEDIA_BASE = "https://api.lk888.ai"
 SKILLS_BASE = "https://api.lk888.ai/api"
-ALLOWED_MODELS = {"gpt-image-2", "omni_flash-10s"}
+IMAGE_MODELS = {'tt-image-2.5', 'tt-image-2'}
+VIDEO_MODELS = {'omni_flash-10s', 'omni_flash-10s-fl', 'omni-flash'}
+ALLOWED_MODELS = IMAGE_MODELS | VIDEO_MODELS | {'gpt-image-2'}  # historical requests only
 
 
 def now() -> str:
@@ -43,7 +45,7 @@ def load(path: str) -> dict:
 
 
 def api_key() -> str:
-    value = os.environ.get("UPDRAMA_API_KEY", "")
+    value = os.environ.get("UPDRAMA_API_KEY") or os.environ.get('LK888_API_KEY', '')
     if not value:
         raise RuntimeError("UPDRAMA_API_KEY is not set")
     return value
@@ -62,7 +64,8 @@ def call(method: str, url: str, body: dict | None = None, timeout: int = 120) ->
         url, data=canonical(body) if body is not None else None, method=method,
         headers={"Authorization": f"Bearer {api_key()}", "Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=timeout, context=context()) as response:
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context()))
+    with opener.open(req, timeout=timeout) as response:
         value = json.loads(response.read().decode())
     if not isinstance(value, dict):
         raise RuntimeError("provider returned non-object JSON")
@@ -105,20 +108,79 @@ def validate(request: dict) -> list[str]:
             errors.append("Image2 size is required")
         if params.get("quality", "auto") not in {"auto", "high", "medium", "low"}:
             errors.append("invalid Image2 quality")
-    if request.get("model") == "omni_flash-10s":
-        if set(params) - {"images", "aspect_ratio"}:
+    if request.get('model') in IMAGE_MODELS:
+        if set(params) - {'images', 'aspect_ratio', 'resolution', 'version', 'quality', 'background'}:
+            errors.append('unexpected TT image params')
+        if not 1 <= len(images) <= 16:
+            errors.append('TT image requires 1-16 references')
+        if params.get('aspect_ratio') not in {'1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9'}:
+            errors.append('invalid TT image aspect ratio')
+        for key, allowed, default in [('resolution', {'1K', '2K', '4K', 'auto'}, '2K'), ('version', {'flare', 'sunburst'}, 'sunburst'), ('quality', {'auto', 'low', 'medium', 'high', 'xhigh', 'max'}, 'high'), ('background', {'opaque', 'transparent', 'auto'}, 'opaque')]:
+            if params.get(key, default) not in allowed:
+                errors.append('invalid TT image ' + key)
+    if request.get("model") in VIDEO_MODELS:
+        variable = request['model'] == 'omni-flash'
+        allowed_params = {'images', 'aspect_ratio'} | ({'duration', 'enhance_prompt', 'enable_upsample'} if variable else set())
+        if set(params) - allowed_params:
             errors.append("unexpected Omni params")
-        if not 1 <= len(images) <= 7:
-            errors.append("Omni requires 1-7 images")
+        max_images = {'omni_flash-10s': 7, 'omni_flash-10s-fl': 2, 'omni-flash': 3}[request['model']]
+        if not 1 <= len(images) <= max_images:
+            errors.append(f'Omni requires 1-{max_images} images')
+        if variable and str(params.get('duration')) not in {'4', '6', '8', '10'}:
+            errors.append('omni-flash requires duration 4/6/8/10')
+        if variable and params.get('enhance_prompt', 'false') not in ('true', 'false', True, False):
+            errors.append('invalid enhance_prompt')
         if params.get("aspect_ratio") not in {"9:16", "16:9"}:
             errors.append("invalid Omni aspect ratio")
+        if len(str(request.get('prompt', ''))) > 4000:
+            errors.append('Omni prompt exceeds 4000 characters; shorten complete clauses')
     return errors
+
+
+def ready_policy(request, args):
+    """V3 calls must match current compiled plans and reviewed capability snapshots."""
+    root = pathlib.Path(args.run_dir).resolve()
+    run_file = root / 'run.json'
+    if not run_file.exists() or str(load(str(run_file)).get('schema_version', '2')).split('.')[0] != '3':
+        return
+    run = load(str(run_file))
+    if request['model'] == 'gpt-image-2':
+        raise ValueError('legacy Image2 route disabled for v3; use TT Image')
+    review = load(str(root / 'provider/contract-review.json'))
+    if not review.get('reviewer') or not review.get('reviewed_at') or request['model'] not in review.get('models', []):
+        raise ValueError('current provider contract review required for selected model')
+    snapshots = review.get('snapshots', {})
+    if not snapshots or not any(pathlib.Path(name).stem == request['model'] for name in snapshots):
+        raise ValueError('review must include the selected model snapshot')
+    snapshot_dirs = sorted(p for p in (root / 'provider').iterdir() if p.is_dir())
+    if not snapshot_dirs or not all((root / name).resolve().is_relative_to(snapshot_dirs[-1].resolve()) for name in snapshots):
+        raise ValueError('review must bind the latest preflight snapshot batch')
+    for name, expected in snapshots.items():
+        path = (root / name).resolve()
+        if not path.is_relative_to(root / 'provider') or sha(path) != expected:
+            raise ValueError('provider snapshot changed or outside run')
+    if request['model'] not in VIDEO_MODELS:
+        return
+    if request['params']['aspect_ratio'] != run['aspect_ratio']:
+        raise ValueError('request aspect ratio differs from delivery contract')
+    proof = load(str(pathlib.Path(args.request).with_suffix('.compile.json')))
+    for name, expected in proof['dependencies'].items():
+        path = (root / name).resolve()
+        if not path.is_relative_to(root) or sha(path) != expected:
+            raise ValueError('compiled dependency is stale')
+    from compile_prompt import build
+    rebuilt, _ = build(root, root / 'manifests/execution-plan.json', proof['job_id'])
+    if request != rebuilt:
+        raise ValueError('request differs from current whole-film plan; recompile')
 
 
 def preflight(args: argparse.Namespace) -> int:
     rows = []
     snapshot_dir = pathlib.Path(args.run_dir) / 'provider' / dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    for path in ("/v1/skills/guide", "/v1/skills/models/gpt-image-2", "/v1/skills/models/omni_flash-10s"):
+    models = set(getattr(args, 'models', None) or IMAGE_MODELS | VIDEO_MODELS)
+    if not models <= ALLOWED_MODELS:
+        raise ValueError('unknown preflight model')
+    for path in ['/v1/skills/guide'] + ['/v1/skills/models/' + model for model in sorted(models)]:
         value = call("GET", SKILLS_BASE + path)
         if not value or value.get('error') or value.get('code', 200) != 200:
             raise RuntimeError('provider preflight error; do not submit')
@@ -136,7 +198,8 @@ def check(args: argparse.Namespace) -> int:
     if not errors and args.ready:
         if not args.run_dir:
             raise ValueError('--ready needs --run-dir')
-        errors = validate(resolve(request, args.run_dir, request['model'] == 'omni_flash-10s'))
+        ready_policy(request, args)
+        errors = validate(resolve(request, args.run_dir, request['model'] in VIDEO_MODELS))
     print(json.dumps({"status": "pass" if not errors else "fail", "errors": errors}, ensure_ascii=False))
     return 0 if not errors else 2
 
@@ -149,7 +212,8 @@ def submit(args: argparse.Namespace) -> int:
     errors = validate(request)
     if errors:
         raise ValueError("; ".join(errors))
-    request = resolve(request, run_dir, request['model'] == 'omni_flash-10s')
+    ready_policy(request, args)
+    request = resolve(request, run_dir, request['model'] in VIDEO_MODELS)
     request_hash = digest(request)
     job_id = hashlib.sha256((args.job_id + ":" + request_hash).encode()).hexdigest()[:24]
     lock = run_dir / ".paid-create.lock"
@@ -273,7 +337,7 @@ def collect(args):
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="command", required=True)
-    x = sub.add_parser("preflight"); x.add_argument('--run-dir', required=True); x.set_defaults(func=preflight)
+    x = sub.add_parser("preflight"); x.add_argument('--run-dir', required=True); x.add_argument('--models', nargs='+', choices=sorted(ALLOWED_MODELS)); x.set_defaults(func=preflight)
     x = sub.add_parser("validate"); x.add_argument("request"); x.add_argument('--ready', action='store_true'); x.add_argument('--run-dir'); x.set_defaults(func=check)
     x = sub.add_parser("submit"); x.add_argument("request"); x.add_argument("--run-dir", required=True); x.add_argument("--job-id", required=True); x.add_argument("--confirm-paid", required=True); x.add_argument("--timeout", type=int, default=180); x.set_defaults(func=submit)
     x = sub.add_parser("status"); x.add_argument("task_id"); x.add_argument("--run-dir", required=True); x.set_defaults(func=status)

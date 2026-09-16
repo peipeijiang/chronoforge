@@ -1,5 +1,9 @@
 # Delivery specification, dry runs and pilots
 
+V3 applies to all three routes. Use editorial_duration for the final film; source_duration exists only for source-bearing routes. Assembly manifests use schema_version=3, run_dir relative to the manifest, and ordered registered container IDs (job asset_id, or job id). Each actual input must match current registry L2 acceptance and the frozen plan's retained duration.
+
+White text/labels and custom narration/music are a separate local postproduction pass. Preserve the clean master, save a new version, register the text/mix plan and new master dependencies, then perform L3 on the actual final output. Bundled assemble.py does not automatically burn text or mix external voiceover. Audio/text timing and safe placement need actual inspection; generated test fixtures are never delivery media.
+
 Freeze a run-specific delivery contract: editorial duration, aspect ratio, output size/fps, framing policy, audio policy and tolerances. The historical vertical master used 720×1280, H.264/yuv420p, 60 fps, AAC 44.1 kHz stereo. These are an **example**, not universal requirements.
 
 Reference images need compatible composition, not identical pixel dimensions. A historical Image2 image returned 945×1665 rather than the requested 1088×1920 and was accepted after inspecting framing. Decide geometry tolerance in L1; do not force unnecessary paid retries for a harmless size difference. Conversely, never crop away an important interaction just to meet dimensions.
